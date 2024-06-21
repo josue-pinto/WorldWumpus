@@ -8,6 +8,7 @@ public class GridUIManager : MonoBehaviour
     public Button generateButton;
     public GridGenerator gridGenerator;
     public Canvas uiCanvas;  // Referência ao Canvas da UI
+    public Canvas canvasReset; // Canvas do botão reset Mapa
 
     void Start()
     {
@@ -25,6 +26,7 @@ public class GridUIManager : MonoBehaviour
             gridGenerator.UpdateGridSize(rows, columns);
             // Desativar o Canvas após gerar a grid
             uiCanvas.gameObject.SetActive(false);
+            canvasReset.gameObject.SetActive(true);
         }
         else
         {

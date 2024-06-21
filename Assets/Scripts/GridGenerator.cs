@@ -4,43 +4,48 @@ using UnityEngine.UI;
 
 public class GridGenerator : MonoBehaviour
 {
-    public GameObject gridPrefab;  // Prefab do elemento da grid
-    public GameObject Wumpus; // Prefab do elemento Wumpus
-    public GameObject Pit; // Prefab do elemento Pit
-    public GameObject Gold; // Prefab do elemento Gold
-    public GameObject Player; // Prefab do elemento Player
-    public GameObject Breeze; // Prefab do elemento Breeze
-    public GameObject Stench; // Prefab do elemento Stench
-    public float pitDensity = 0.1875f; // Densidade de pits
-    private int rows;  // Número de linhas na grid
-    private int columns;  // Número de colunas na grid
-    public float spacing = 1.0f;  // Espaçamento inicial entre os elementos da grid
-    public float minSpacing = 0.5f;  // Espaçamento mínimo entre os elementos da grid
+    // Referências existentes
+    public GameObject gridPrefab;
+    public GameObject Wumpus;
+    public GameObject Pit;
+    public GameObject Gold;
+    public GameObject Player;
+    public GameObject Breeze;
+    public GameObject Stench;
+    public float pitDensity = 0.1875f;
+    private int rows;
+    private int columns;
+    public float spacing = 1.0f;
+    public float minSpacing = 0.5f;
     private Camera mainCamera;
-    public Text alertText;  // Referência ao texto de alerta da UI
+    public Text alertText;
     private CameraController cameraController;
+    public AudioSource audiosource;
+    public AudioClip wumpusDeathSound;
+
+    // Adicione esta linha para referenciar o Canvas a ser ativado
+    public Canvas canvasToActivate;
+    public Canvas canvasReset; // Canvas do botão resetar
+
+    // Variável para verificar se o jogo terminou
+    private bool gameEnded = false;
 
     void Awake()
     {
         mainCamera = Camera.main;
+        audiosource = GetComponent<AudioSource>();
     }
 
     public void UpdateGridSize(int newRows, int newColumns)
     {
-        // Atualiza as dimensões
         rows = newRows;
         columns = newColumns;
-
-        // Limpa a grid existente
         ClearGrid();
-
-        // Gera a nova grid
         GenerateGrid();
     }
 
     void GenerateGrid()
     {
-        // Calcular a posição inicial para centralizar a grid
         Vector3 startPosition = CalculateStartPosition();
 
         for (int i = 0; i < rows; i++)
@@ -52,97 +57,95 @@ public class GridGenerator : MonoBehaviour
             }
         }
 
-        // Adicionar o jogador na posição (0,0)
         AddPlayer();
-
-        // Adicionar elementos aleatórios
         AddRandomElements();
     }
 
-
     Vector3 CalculateStartPosition()
     {
-        // Calcular o tamanho total da grid
         float gridWidth = (columns - 1) * spacing;
         float gridHeight = (rows - 1) * spacing;
-
-        // Calcular a posição inicial para centralizar a grid
         float startX = -gridWidth / 2;
         float startY = -gridHeight / 2;
-
         return new Vector3(startX, startY, 0);
     }
 
     void AddPlayer()
     {
-        // Supondo que o objeto da câmera tenha o componente CameraController
         cameraController = Camera.main.GetComponent<CameraController>();
-
         float gridWidth = (columns - 1) * spacing;
         float gridHeight = (rows - 1) * spacing;
-
         float startX = -gridWidth / 2;
         float startY = -gridHeight / 2;
-
         Vector3 playerPosition = new Vector3(startX, startY, 0);
         GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
-        // Define o jogador como o alvo da câmera
-        cameraController.SetTarget(playerObject.transform);
-
-        // Inicializar o script de movimento do jogador
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
         playerMovement.Initialize(rows, columns, spacing);
-        playerMovement.alertText = alertText;  // Passar a referência do texto de alerta
+        playerMovement.alertText = alertText;
     }
 
     void AddRandomElements()
     {
         System.Random rand = new System.Random();
         HashSet<Vector2Int> occupiedPositions = new HashSet<Vector2Int>();
-
-        // Marcar a posição (0,0) como ocupada
+        HashSet<Vector2Int> pitPositions = new HashSet<Vector2Int>();
         occupiedPositions.Add(new Vector2Int(0, 0));
 
-        // Adicionar Wumpus
-        AddElementRandomly(Wumpus, rand, occupiedPositions, Stench);
-
-        // Calcular o número de poços com base na densidade
+        Vector2Int wumpusPosition = AddElementRandomly(Wumpus, rand, occupiedPositions, Stench, pitPositions);
         int numberOfPits = Mathf.RoundToInt(rows * columns * pitDensity);
 
-        // Adicionar Poços
         for (int i = 0; i < numberOfPits; i++)
         {
-            AddElementRandomly(Pit, rand, occupiedPositions, Breeze);
+            pitPositions.Add(AddElementRandomly(Pit, rand, occupiedPositions, Breeze, pitPositions));
         }
 
-        // Adicionar Ouro
-        AddElementRandomly(Gold, rand, occupiedPositions, null);
+        // Adicionar Gold com a chance de ocasionalmente ocupar a mesma posição que o Wumpus
+        Vector2Int goldPosition;
+        do
+        {
+            goldPosition = new Vector2Int(rand.Next(columns), rand.Next(rows));
+        } while (occupiedPositions.Contains(goldPosition) || pitPositions.Contains(goldPosition) || (goldPosition == wumpusPosition && rand.NextDouble() > 0.5));
+
+        Instantiate(Gold, CalculateElementPosition(goldPosition), Quaternion.identity, transform);
+        occupiedPositions.Add(goldPosition);
     }
 
-    void AddElementRandomly(GameObject elementPrefab, System.Random rand, HashSet<Vector2Int> occupiedPositions, GameObject perceptionPrefab)
+    Vector2Int AddElementRandomly(GameObject elementPrefab, System.Random rand, HashSet<Vector2Int> occupiedPositions, GameObject perceptionPrefab, HashSet<Vector2Int> pitPositions)
     {
         Vector2Int position;
+
         do
         {
             position = new Vector2Int(rand.Next(columns), rand.Next(rows));
-        } while (occupiedPositions.Contains(position));
+        } while (occupiedPositions.Contains(position) || pitPositions.Contains(position));
 
-        occupiedPositions.Add(position);
+        if (elementPrefab != Gold)
+        {
+            occupiedPositions.Add(position);
+        }
 
         float gridWidth = (columns - 1) * spacing;
         float gridHeight = (rows - 1) * spacing;
-
         float startX = -gridWidth / 2;
         float startY = -gridHeight / 2;
-
         Vector3 elementPosition = new Vector3(startX + position.x * spacing, startY + position.y * spacing, 0);
         Instantiate(elementPrefab, elementPosition, Quaternion.identity, transform);
 
-        // Adicionar percepções se o prefab de percepção não for nulo
         if (perceptionPrefab != null)
         {
             AddPerceptions(position, perceptionPrefab);
         }
+
+        return position;
+    }
+
+    Vector3 CalculateElementPosition(Vector2Int gridPosition)
+    {
+        float gridWidth = (columns - 1) * spacing;
+        float gridHeight = (rows - 1) * spacing;
+        float startX = -gridWidth / 2;
+        float startY = -gridHeight / 2;
+        return new Vector3(startX + gridPosition.x * spacing, startY + gridPosition.y * spacing, 0);
     }
 
     void AddPerceptions(Vector2Int position, GameObject perceptionPrefab)
@@ -153,15 +156,12 @@ public class GridGenerator : MonoBehaviour
         {
             Vector2Int perceptionPosition = position + direction;
 
-            // Verificar se a posição está dentro dos limites da grid
             if (perceptionPosition.x >= 0 && perceptionPosition.x < columns && perceptionPosition.y >= 0 && perceptionPosition.y < rows)
             {
                 float gridWidth = (columns - 1) * spacing;
                 float gridHeight = (rows - 1) * spacing;
-
                 float startX = -gridWidth / 2;
                 float startY = -gridHeight / 2;
-
                 Vector3 perceptionWorldPosition = new Vector3(startX + perceptionPosition.x * spacing, startY + perceptionPosition.y * spacing, 0);
                 Instantiate(perceptionPrefab, perceptionWorldPosition, Quaternion.identity, transform);
             }
@@ -175,4 +175,25 @@ public class GridGenerator : MonoBehaviour
             Destroy(child.gameObject);
         }
     }
+
+    public void PlayWumpusDeathSound()
+    {
+        if (audiosource != null && wumpusDeathSound != null)
+        {
+            audiosource.PlayOneShot(wumpusDeathSound);
+        }
+    }
+
+    // Adicione este método para ativar o Canvas
+    public void ActivateCanvas()
+    {
+        if (canvasToActivate != null)
+        {
+            ClearGrid();
+            canvasToActivate.gameObject.SetActive(true);
+            canvasReset.gameObject.SetActive(false);
+        }
+    }
 }
+
+

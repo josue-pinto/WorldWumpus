@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 public class PlayerMovement : MonoBehaviour
@@ -159,7 +160,8 @@ public class PlayerMovement : MonoBehaviour
             }
             else if (collider.CompareTag("Gold"))
             {
-                AddMessage("Você encontrou e coletou o ouro!");
+                AddMessage("Você encontrou o ouro!");
+                AddMessage("Você coletou o ouro!");
                 Destroy(collider.gameObject); // Remover o ouro da grid
                 perceptionFound = true;
             }
@@ -196,7 +198,6 @@ public class PlayerMovement : MonoBehaviour
             perceptionMessages.RemoveAt(0);
         }
     }
-
     public void UpdateAlertText()
     {
         string formattedText = "";
@@ -226,3 +227,4 @@ public class PlayerMovement : MonoBehaviour
         arrowScript.Initialize(direction);
     }
 }
+

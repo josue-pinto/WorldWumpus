@@ -18,15 +18,20 @@ public class Arrow : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Wumpus"))
+        if (collision.gameObject.CompareTag("Wumpus"))
         {
             // Notificar o jogador que matou o Wumpus
             PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
             playerMovement.AddMessage("Você matou o Wumpus!");
             playerMovement.UpdateAlertText();
+
+            //Destroi o Wumpus
             Destroy(collision.gameObject);
-            
+            // Reproduzir som de colisão pela flecha
+            GridGenerator gridGenerator = FindAnyObjectByType<GridGenerator>();
+            gridGenerator.PlayWumpusDeathSound();
         }
+
         // Destruir a flecha após colidir com qualquer objeto
         Destroy(gameObject);
     }

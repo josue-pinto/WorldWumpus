@@ -2,45 +2,55 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public Transform target; // O objeto alvo que a câmera deve seguir
-    public Vector3 offset; // Offset opcional para ajustar a posição da câmera em relação ao alvo
-    public float smoothSpeed = 0.125f; // Velocidade de suavização do movimento da câmera
-
     public float zoomSpeed = 10f; // Velocidade do zoom
     public float minZoom = 5f; // Valor mínimo de zoom
     public float maxZoom = 20f; // Valor máximo de zoom
+    public float panSpeed = 20f; // Velocidade de pan da câmera
 
     private Camera cam;
-    private float initialZ;
+    private Vector3 dragOrigin; // Ponto de origem do clique do mouse
+    private bool isDragging = false; // Verifica se a câmera está sendo arrastada
 
     void Start()
     {
         cam = GetComponent<Camera>();
-        initialZ = transform.position.z;
     }
 
     void LateUpdate()
     {
-        // Verifica se o alvo está disponível
-        if (target != null)
-        {
-            // Função de seguir o objeto alvo
-            Vector3 desiredPosition = target.position + offset;
-            desiredPosition.z = initialZ; // Mantém a posição Z constante
-            Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
-            transform.position = smoothedPosition;
-        }
+        HandleZoom();
+        HandlePan();
+    }
 
+    void HandleZoom()
+    {
         // Função de zoom com o scroll do mouse
         float scrollData = Input.GetAxis("Mouse ScrollWheel");
         cam.orthographicSize -= scrollData * zoomSpeed;
         cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minZoom, maxZoom);
     }
 
-    // Método para definir o alvo externamente
-    public void SetTarget(Transform newTarget)
+    void HandlePan()
     {
-        target = newTarget;
+        // Detectar quando o botão esquerdo do mouse é pressionado
+        if (Input.GetMouseButtonDown(0))
+        {
+            dragOrigin = cam.ScreenToWorldPoint(Input.mousePosition);
+            isDragging = true;
+        }
+
+        // Detectar quando o botão esquerdo do mouse é liberado
+        if (Input.GetMouseButtonUp(0))
+        {
+            isDragging = false;
+        }
+
+        // Mover a câmera enquanto o botão esquerdo do mouse é pressionado e arrastado
+        if (isDragging)
+        {
+            Vector3 difference = dragOrigin - cam.ScreenToWorldPoint(Input.mousePosition);
+            cam.transform.position += difference;
+        }
     }
 }
 
