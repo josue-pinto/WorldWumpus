@@ -70,7 +70,7 @@ public class GridGenerator : MonoBehaviour
         return new Vector3(startX, startY, 0);
     }
 
-    void AddPlayer()
+    public void AddPlayer()
     {
         cameraController = Camera.main.GetComponent<CameraController>();
         float gridWidth = (columns - 1) * spacing;

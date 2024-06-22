@@ -97,6 +97,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d80e165129c4ca4abcc1a9cbff66cfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
+  moveSpeed: 10
   alertText: {fileID: 0}
   arrowPrefab: {fileID: 2778986413199687187, guid: 145e4706ba8d20341b25009ec753f9e5, type: 3}
