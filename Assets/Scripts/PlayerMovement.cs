@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private List<string> perceptionMessages = new List<string>();  // Lista de mensagens de percepção
     public GameObject arrowPrefab; // Prefab da flecha
     private bool hasShotArrow = false; // Flag para verificar se o jogador já disparou a flecha
+    private bool isMoving = false; // Inicia a movimentação randômica do personagem
 
     void Start()
     {
@@ -27,6 +28,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        //Faz a movimentação randômica do personagem
+        if (!isMoving)
+        {
+            StartCoroutine(RandomMove());
+        }
+
         // Movimento do jogador
         if (Input.GetKeyDown(KeyCode.W))
         {
@@ -225,6 +232,34 @@ public class PlayerMovement : MonoBehaviour
         GameObject arrow = Instantiate(arrowPrefab, arrowPosition, Quaternion.identity);
         Arrow arrowScript = arrow.GetComponent<Arrow>();
         arrowScript.Initialize(direction);
+    }
+
+    // Courrotine Para fazer a movimentação randômica do personagem
+    IEnumerator RandomMove()
+    {
+        isMoving = true;
+
+        int direction = Random.Range(0, 4);
+
+        switch (direction)
+        {
+            case 0:
+                Move(Vector2Int.up);
+                break;
+            case 1:
+                Move(Vector2Int.down);
+                break;
+            case 2:
+                Move(Vector2Int.left);
+                break;
+            case 3:
+                Move(Vector2Int.right);
+                break;
+        }
+
+        yield return new WaitForSeconds(1f); // Espera de 1 segundo
+
+        isMoving = false;
     }
 }
 
