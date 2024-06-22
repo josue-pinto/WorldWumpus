@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: -7086946779429536500}
   m_Layer: 0
   m_Name: Agent
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -100,3 +100,5 @@ MonoBehaviour:
   moveSpeed: 10
   alertText: {fileID: 0}
   arrowPrefab: {fileID: 2778986413199687187, guid: 145e4706ba8d20341b25009ec753f9e5, type: 3}
+  alertCount: {fileID: 0}
+  collisionCount: 0

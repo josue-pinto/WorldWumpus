@@ -1,9 +1,12 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Arrow : MonoBehaviour
 {
     public float speed = 5f;
     private Vector2 direction;
+    public Text countWumpus;
+    private int numberWumpus = 0;
 
     public void Initialize(Vector2 direction)
     {
@@ -30,6 +33,8 @@ public class Arrow : MonoBehaviour
             // Reproduzir som de colisão pela flecha
             GridGenerator gridGenerator = FindAnyObjectByType<GridGenerator>();
             gridGenerator.PlayWumpusDeathSound();
+            numberWumpus++;
+            countWumpus.text = numberWumpus.ToString();
         }
 
         // Destruir a flecha após colidir com qualquer objeto

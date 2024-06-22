@@ -15,9 +15,19 @@ public class PlayerMovement : MonoBehaviour
     public GameObject arrowPrefab; // Prefab da flecha
     private bool hasShotArrow = false; // Flag para verificar se o jogador já disparou a flecha
     private bool isMoving = false; // Inicia a movimentação randômica do personagem
+    public Text countGold;
+    private int numberGold = 0;
+    public Text countArrow;
+    public int numberArrow = 1;
+
 
     void Start()
     {
+        // Inicia o contador de ouro como zero
+        countGold.text = numberGold.ToString();
+
+        // Inicia contador das flechas
+        countArrow.text = numberArrow.ToString();
         // Inicializar a posição alvo como a posição inicial do jogador
         targetPosition = transform.position;
         // Limpar texto de alerta
@@ -61,6 +71,7 @@ public class PlayerMovement : MonoBehaviour
                 AddMessage("Você disparou uma flecha para cima.");
                 UpdateAlertText();
                 hasShotArrow = true;
+                SituationArrow();
             }
             else if (Input.GetKeyDown(KeyCode.DownArrow))
             {
@@ -68,6 +79,7 @@ public class PlayerMovement : MonoBehaviour
                 AddMessage("Você disparou uma flecha para baixo.");
                 UpdateAlertText();
                 hasShotArrow = true;
+                SituationArrow();
             }
             else if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
@@ -75,6 +87,7 @@ public class PlayerMovement : MonoBehaviour
                 AddMessage("Você disparou uma flecha para a esquerda.");
                 UpdateAlertText();
                 hasShotArrow = true;
+                SituationArrow();
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
@@ -82,6 +95,7 @@ public class PlayerMovement : MonoBehaviour
                 AddMessage("Você disparou uma flecha para a direita.");
                 UpdateAlertText();
                 hasShotArrow = true;
+                SituationArrow();
             }
         }
         else
@@ -169,7 +183,9 @@ public class PlayerMovement : MonoBehaviour
             {
                 AddMessage("Você encontrou o ouro!");
                 AddMessage("Você coletou o ouro!");
-                Destroy(collider.gameObject); // Remover o ouro da grid
+                Destroy(collider.gameObject);               // Remover o ouro da grid
+                numberGold++;                          // Incrementa o ouro capturado
+                countGold.text = numberGold.ToString();  // Atualiza o display
                 perceptionFound = true;
             }
         }
@@ -260,6 +276,20 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(1f); // Espera de 1 segundo
 
         isMoving = false;
+    }
+
+    void SituationArrow()
+    {
+        if (numberArrow > 0)
+        {
+            numberArrow--;
+            countArrow.text = numberArrow.ToString();
+        }
+        else
+        {
+            numberArrow = 0;
+            countArrow.text = numberArrow.ToString();
+        }
     }
 }
 

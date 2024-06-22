@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 public class GridGenerator : MonoBehaviour
 {
@@ -18,7 +19,11 @@ public class GridGenerator : MonoBehaviour
     public float spacing = 1.0f;
     public float minSpacing = 0.5f;
     private Camera mainCamera;
-    public Text alertText;
+    public Text alertText; // Texto das ações
+    public Text countGold; // Contador de ouro
+    public Text countArrow; // Contador Flechas
+    public Text countWumpus; // Contador de Wumpus mortos
+    private int numberWumpus;
     private CameraController cameraController;
     public AudioSource audiosource;
     public AudioClip wumpusDeathSound;
@@ -26,9 +31,6 @@ public class GridGenerator : MonoBehaviour
     // Adicione esta linha para referenciar o Canvas a ser ativado
     public Canvas canvasToActivate;
     public Canvas canvasReset; // Canvas do botão resetar
-
-    // Variável para verificar se o jogo terminou
-    private bool gameEnded = false;
 
     void Awake()
     {
@@ -82,6 +84,8 @@ public class GridGenerator : MonoBehaviour
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
         playerMovement.Initialize(rows, columns, spacing);
         playerMovement.alertText = alertText;
+        playerMovement.countGold = countGold;
+        playerMovement.countArrow = countArrow;
     }
 
     void AddRandomElements()
@@ -173,6 +177,8 @@ public class GridGenerator : MonoBehaviour
         foreach (Transform child in transform)
         {
             Destroy(child.gameObject);
+            numberWumpus = 0;
+            countWumpus.text = numberWumpus.ToString();
         }
     }
 
@@ -181,6 +187,8 @@ public class GridGenerator : MonoBehaviour
         if (audiosource != null && wumpusDeathSound != null)
         {
             audiosource.PlayOneShot(wumpusDeathSound);
+            Arrow arrow = FindAnyObjectByType<Arrow>();
+            arrow.countWumpus = countWumpus;
         }
     }
 
