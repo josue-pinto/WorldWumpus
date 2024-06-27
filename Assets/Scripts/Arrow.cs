@@ -11,10 +11,10 @@ public class Arrow : MonoBehaviour
     public void Initialize(Vector2 direction)
     {
         this.direction = direction.normalized;
-        Destroy(gameObject, 2f); // Destroi a flecha após 2 segundos
+        Destroy(gameObject, 1f); // Destroi a flecha após 2 segundos
     }
 
-    void Update()
+    void FixedUpdate()
     {
         transform.Translate(direction * speed * Time.deltaTime);
     }
@@ -24,13 +24,18 @@ public class Arrow : MonoBehaviour
         if (collision.gameObject.CompareTag("Wumpus"))
         {
             // Notificar o jogador que matou o Wumpus
-            PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+            PlayerMovement playerMovement = FindAnyObjectByType<PlayerMovement>();
+            playerMovement.LogRegister("Grito", "Perception", "...");
+            playerMovement.AddMessage("Você ouve um grito!");
+            playerMovement.UpdateAlertText();
+            playerMovement.LogRegister("Wumpus Dead", "Perception", "...");
             playerMovement.AddMessage("Você matou o Wumpus!");
             playerMovement.UpdateAlertText();
 
             //Destroi o Wumpus
             Destroy(collision.gameObject);
             // Reproduzir som de colisão pela flecha
+            playerMovement.hasWumpus = false;
             GridGenerator gridGenerator = FindAnyObjectByType<GridGenerator>();
             gridGenerator.PlayWumpusDeathSound();
             numberWumpus++;

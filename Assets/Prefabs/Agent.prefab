@@ -97,8 +97,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d80e165129c4ca4abcc1a9cbff66cfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 10
+  moveSpeed: 1
   alertText: {fileID: 0}
+  perceptionMessages: []
   arrowPrefab: {fileID: 2778986413199687187, guid: 145e4706ba8d20341b25009ec753f9e5, type: 3}
-  alertCount: {fileID: 0}
-  collisionCount: 0
+  wumpus: {fileID: 6222881704228193259, guid: 51593900ea55521418de6736a5d1f8ab, type: 3}
+  countGold: {fileID: 0}
+  countArrow: {fileID: 0}
+  numberArrow: 1

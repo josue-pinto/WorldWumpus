@@ -2,9 +2,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using Unity.VisualScripting;
+using System;
 
 public class GridGenerator : MonoBehaviour
 {
+    [Header("Prefabs")]
     // Referências existentes
     public GameObject gridPrefab;
     public GameObject Wumpus;
@@ -13,24 +15,32 @@ public class GridGenerator : MonoBehaviour
     public GameObject Player;
     public GameObject Breeze;
     public GameObject Stench;
+
+    [Header("Config. Grid")]
     public float pitDensity = 0.1875f;
     private int rows;
     private int columns;
     public float spacing = 1.0f;
     public float minSpacing = 0.5f;
     private Camera mainCamera;
+    private CameraController cameraController;
+
+    [Header("Config. Dialog")]
+    // Adicione esta linha para referenciar o Canvas a ser ativado
+    public Canvas canvasToActivate;
+    public Canvas canvasReset; // Canvas do botão resetar
     public Text alertText; // Texto das ações
     public Text countGold; // Contador de ouro
     public Text countArrow; // Contador Flechas
     public Text countWumpus; // Contador de Wumpus mortos
     private int numberWumpus;
-    private CameraController cameraController;
+    int count = 0;
+
+    [Header("Config. Audio")]
     public AudioSource audiosource;
     public AudioClip wumpusDeathSound;
 
-    // Adicione esta linha para referenciar o Canvas a ser ativado
-    public Canvas canvasToActivate;
-    public Canvas canvasReset; // Canvas do botão resetar
+
 
     void Awake()
     {
@@ -74,6 +84,7 @@ public class GridGenerator : MonoBehaviour
 
     public void AddPlayer()
     {
+        count++;
         cameraController = Camera.main.GetComponent<CameraController>();
         float gridWidth = (columns - 1) * spacing;
         float gridHeight = (rows - 1) * spacing;
@@ -82,6 +93,7 @@ public class GridGenerator : MonoBehaviour
         Vector3 playerPosition = new Vector3(startX, startY, 0);
         GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
+        playerMovement.playerId = $"Player{count}";
         playerMovement.Initialize(rows, columns, spacing);
         playerMovement.alertText = alertText;
         playerMovement.countGold = countGold;
@@ -184,12 +196,12 @@ public class GridGenerator : MonoBehaviour
 
     public void PlayWumpusDeathSound()
     {
-        if (audiosource != null && wumpusDeathSound != null)
-        {
-            audiosource.PlayOneShot(wumpusDeathSound);
-            Arrow arrow = FindAnyObjectByType<Arrow>();
-            arrow.countWumpus = countWumpus;
-        }
+        //if (audiosource != null && wumpusDeathSound != null)
+        //{
+        audiosource.PlayOneShot(wumpusDeathSound);
+        Arrow arrow = FindAnyObjectByType<Arrow>();
+        arrow.countWumpus = countWumpus;
+        // }
     }
 
     // Adicione este método para ativar o Canvas
