@@ -68,8 +68,15 @@ public class GridGenerator : MonoBehaviour
                 Instantiate(gridPrefab, position, Quaternion.identity, transform);
             }
         }
+        // adicionando 200 agentes na população
+        int population;
+        population = 200;
 
-        AddPlayer();
+        for (int i = 0; i < population; i++)
+        {
+            AddPlayer();
+        }
+
         AddRandomElements();
     }
 
@@ -120,7 +127,8 @@ public class GridGenerator : MonoBehaviour
         do
         {
             goldPosition = new Vector2Int(rand.Next(columns), rand.Next(rows));
-        } while (occupiedPositions.Contains(goldPosition) || pitPositions.Contains(goldPosition) || (goldPosition == wumpusPosition && rand.NextDouble() > 0.5));
+        }
+        while (occupiedPositions.Contains(goldPosition) || pitPositions.Contains(goldPosition) || (goldPosition == wumpusPosition && rand.NextDouble() > 0.5));
 
         Instantiate(Gold, CalculateElementPosition(goldPosition), Quaternion.identity, transform);
         occupiedPositions.Add(goldPosition);
@@ -133,7 +141,8 @@ public class GridGenerator : MonoBehaviour
         do
         {
             position = new Vector2Int(rand.Next(columns), rand.Next(rows));
-        } while (occupiedPositions.Contains(position) || pitPositions.Contains(position));
+        }
+        while (occupiedPositions.Contains(position) || pitPositions.Contains(position));
 
         if (elementPrefab != Gold)
         {

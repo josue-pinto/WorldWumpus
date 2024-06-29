@@ -46,7 +46,26 @@ public class DataExtractor : MonoBehaviour
                 )";
                 command.ExecuteNonQuery();
             }
+            connection.Close();
+
+            //Create Chromosome
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Chromosome (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PlayerId TEXT,
+                    Gene TEXT,
+                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+
         }
+
+        
     }
 
     List<PlayerAction> GetDataFromDatabase()
