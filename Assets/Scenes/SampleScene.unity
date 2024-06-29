@@ -336,7 +336,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 108.8, y: 133.79}
+  m_AnchoredPosition: {x: 193, y: -22.4}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &237021068
@@ -976,10 +976,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1312043163}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 0.4794099}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -78.1, y: 103.8}
-  m_SizeDelta: {x: 62.44, y: 62.44}
+  m_AnchoredPosition: {x: -167, y: 4.8999996}
+  m_SizeDelta: {x: 62.44, y: 29.439999}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &753539241
 MonoBehaviour:
@@ -2810,14 +2810,14 @@ MonoBehaviour:
   pitDensity: 0.1875
   spacing: 0.9
   minSpacing: 0.9
+  canvasToActivate: {fileID: 1312043162}
+  canvasReset: {fileID: 1428457286}
   alertText: {fileID: 349857481}
   countGold: {fileID: 945341288}
   countArrow: {fileID: 587161625}
   countWumpus: {fileID: 1614338901}
   audiosource: {fileID: 1812860913}
   wumpusDeathSound: {fileID: 8300000, guid: 0ba4670f0815d784e81c8163a61ee3d1, type: 3}
-  canvasToActivate: {fileID: 1312043162}
-  canvasReset: {fileID: 1428457286}
 --- !u!82 &1812860913
 AudioSource:
   m_ObjectHideFlags: 0

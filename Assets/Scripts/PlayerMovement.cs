@@ -41,6 +41,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Config. Logging")]
     public string playerId;
+    public string gene;
     private string dbFilePath;
     private string connectionString;
     private List<Task> pendingTasks = new List<Task>();  // Lista de tarefas pendentes
@@ -90,6 +91,7 @@ public class PlayerMovement : MonoBehaviour
             previousPosition = targetPosition;
             targetPosition = newPosition;
             LogRegister("...", "Move", direcao); // Registrar o movimento aqui
+            Chromosome(direcao); //criar cromossomo de movimento de direção
             CheckForPerceptions(newPosition);
         }
     }
@@ -162,6 +164,8 @@ public class PlayerMovement : MonoBehaviour
                     UpdateAlertText();
                     LogRegister("Catch", "Perception", "...");
                     AddMessage("Você encontrou o ouro!");
+                    Chromosome("TG"); //took the gold
+                    AgentTheBest(); //gravando o material genético do melhor agente até o momento
                     UpdateAlertText();
                     hasGold = true;
                     RandomAction(1);
@@ -204,13 +208,17 @@ public class PlayerMovement : MonoBehaviour
         {
             LogRegister("Pit", "Perception", "...");
             AddMessage("Você caiu em um poço!");
+            Chromosome("FP"); //Fell into the pit
+
             UpdateAlertText();
             Destroy(gameObject);
         }
         else if (hasWumpus && perceptionFound)
         {
             LogRegister("Wumpus", "Perception", "...");
+            Chromosome("KbW"); //Gravando cromossomo, KbW (killed by the Wumpus)
             AddMessage("Você morreu para o Wumpus!");
+
             UpdateAlertText();
             Destroy(gameObject);
         }
@@ -299,6 +307,7 @@ public class PlayerMovement : MonoBehaviour
                 else
                 {
                     LogRegister("Not Arrow", "DirectionArrow", "...");
+                    Chromosome("NA"); //gravando cromossomo NA (Not Arrow)
                     AddMessage("Você não possui mais flechas.");
                     UpdateAlertText();
                     RandomDirection();
@@ -393,6 +402,9 @@ public class PlayerMovement : MonoBehaviour
         if (wumpus != null)
         {
             LogRegister("Kill", "ShootArrow", "...");
+            Chromosome("KW"); // gravando cromossomo KW (Killed the Wumpus)
+            AgentTheBest(); //gravando o material genético do melhor agente até o momento
+            Selection(); //gravando a melhor seleção, que deu menos passos
             AddMessage("Você matou o Wumpus!");
             UpdateAlertText();
             hasWumpus = false;
@@ -415,6 +427,39 @@ public class PlayerMovement : MonoBehaviour
                 command.CommandText = "CREATE TABLE IF NOT EXISTS PlayerActions (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Perception TEXT, Action TEXT, Direction TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
                 command.ExecuteNonQuery();
             }
+            connection.Close();
+
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS Chromosome (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Gene TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS AgentTheBest (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS CrossOver (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Gene TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS Selection (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT,Steps NUMBER, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
         }
     }
 
@@ -451,6 +496,143 @@ public class PlayerMovement : MonoBehaviour
         finally
         {
             pendingTasks.Remove(logTask);
+        }
+    }
+
+    //Criando tabela do Cromossomo para fazer a reproducao e mutação posteriormente.
+    public void Chromosome(string gene)
+    {
+        Task createChromosome = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO Chromosome (PlayerId, Gene) VALUES (@playerId, @gene)";
+                    command.Parameters.AddWithValue("@playerId", playerId);
+                    command.Parameters.AddWithValue("@gene", gene);  
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createChromosome);
+
+        try
+        {
+            createChromosome.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to Chromosome to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createChromosome);
+        }
+    }
+
+    //Criando tabela de Melhores Agentes (AgentTheBest), quem pegou o ouro, matou o wumpus e conseguiu sair* (falta o sair)
+    public void AgentTheBest()
+    {
+        Task createAgentTheBest = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO AgentTheBest (PlayerId) VALUES (@playerId)";
+                    command.Parameters.AddWithValue("@playerId", playerId);
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createAgentTheBest);
+
+        try
+        {
+            createAgentTheBest.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to AgentTheBest to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createAgentTheBest);
+        }
+    }
+
+    //Criando a tabela de CrossOver de 1 ponto, isto é trocar um Gene entre dois Pais e criar um novo ser
+    public void CrossOver()
+    {
+        Task createCrossOver = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO CrossOver (PlayerId) VALUES (@playerId)";
+                    command.Parameters.AddWithValue("@playerId", playerId);
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createCrossOver);
+
+        try
+        {
+            createCrossOver.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to CrossOver to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createCrossOver);
+        }
+    }
+
+    //Criando a tabela de Seleção dos menores passos, função fitness
+    public void Selection()
+    {
+        Task createSelection = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO Selection (PlayerId,Steps)  SELECT PlayerId, count(playerid)  from CrossOver group by PlayerId";
+                    command.Parameters.AddWithValue("@playerId", playerId);
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createSelection);
+
+        try
+        {
+            createSelection.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to CrossOver to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createSelection);
         }
     }
 }
