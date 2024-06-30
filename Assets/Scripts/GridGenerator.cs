@@ -34,6 +34,9 @@ public class GridGenerator : MonoBehaviour
     public Canvas canvasToActivate;
     public Canvas canvasReset; // Canvas do botão resetar
 
+    // Prefab selecionado
+    private GameObject selectedPrefab;
+
     void Awake()
     {
         mainCamera = Camera.main;
@@ -46,6 +49,21 @@ public class GridGenerator : MonoBehaviour
         columns = newColumns;
         ClearGrid();
         GenerateGrid();
+    }
+
+    void Update()
+    {
+        if (selectedPrefab != null && Input.GetMouseButtonDown(0))
+        {
+            Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector2Int gridPosition = GetGridPosition(mousePosition);
+
+            if (IsValidGridPosition(gridPosition))
+            {
+                CreateElementAtPosition(gridPosition, selectedPrefab);
+                DeselectPrefab(); // Deselecionar o prefab após criar o elemento
+            }
+        }
     }
 
     void GenerateGrid()
@@ -206,6 +224,69 @@ public class GridGenerator : MonoBehaviour
             canvasReset.gameObject.SetActive(false);
         }
     }
+
+    // Adicione métodos para seleção e deseleção de prefabs
+    public void SelectPrefab(GameObject prefab)
+    {
+        selectedPrefab = prefab;
+    }
+
+    public void DeselectPrefab()
+    {
+        selectedPrefab = null;
+    }
+
+    public void SelectWumpus()
+    {
+        SelectPrefab(Wumpus);
+    }
+
+    public void SelectPit()
+    {
+        SelectPrefab(Pit);
+    }
+
+    public void SelectGold()
+    {
+        SelectPrefab(Gold);
+    }
+
+    Vector2Int GetGridPosition(Vector3 worldPosition)
+    {
+        float gridWidth = (columns - 1) * spacing;
+        float gridHeight = (rows - 1) * spacing;
+        float startX = -gridWidth / 2;
+        float startY = -gridHeight / 2;
+
+        int x = Mathf.RoundToInt((worldPosition.x - startX) / spacing);
+        int y = Mathf.RoundToInt((worldPosition.y - startY) / spacing);
+
+        return new Vector2Int(x, y);
+    }
+
+    bool IsValidGridPosition(Vector2Int gridPosition)
+    {
+        return gridPosition.x >= 0 && gridPosition.x < columns && gridPosition.y >= 0 && gridPosition.y < rows;
+    }
+
+    void CreateElementAtPosition(Vector2Int position, GameObject elementPrefab)
+    {
+        GameObject perceptionPrefab = null;
+
+        if (elementPrefab == Wumpus)
+        {
+            perceptionPrefab = Stench;
+        }
+        else if (elementPrefab == Pit)
+        {
+            perceptionPrefab = Breeze;
+        }
+
+        Instantiate(elementPrefab, CalculateElementPosition(position), Quaternion.identity, transform);
+
+        if (perceptionPrefab != null)
+        {
+            AddPerceptions(position, perceptionPrefab);
+        }
+    }
 }
-
-
