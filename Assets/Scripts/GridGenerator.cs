@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using Unity.VisualScripting;
+using System;
 
 public class GridGenerator : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class GridGenerator : MonoBehaviour
     private int columns;
     public float spacing = 1.0f;
     public float minSpacing = 0.5f;
+    public int count = 0;
     private Camera mainCamera;
     public Text alertText; // Texto das ações
     public Text countGold; // Contador de ouro
@@ -74,6 +76,7 @@ public class GridGenerator : MonoBehaviour
 
     public void AddPlayer()
     {
+        count++;
         cameraController = Camera.main.GetComponent<CameraController>();
         float gridWidth = (columns - 1) * spacing;
         float gridHeight = (rows - 1) * spacing;
@@ -82,6 +85,7 @@ public class GridGenerator : MonoBehaviour
         Vector3 playerPosition = new Vector3(startX, startY, 0);
         GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
+        playerMovement.playerId = Convert.ToString($"Player {count}");
         playerMovement.Initialize(rows, columns, spacing);
         playerMovement.alertText = alertText;
         playerMovement.countGold = countGold;
