@@ -70,3 +70,9 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+mestrado
+mestrado.pub
+.gitignore.swp
+Assets/Scripts/echo
+Assets/Scripts/port445=no_netbios
+Assets/Scripts/protocol_vers_map=6
