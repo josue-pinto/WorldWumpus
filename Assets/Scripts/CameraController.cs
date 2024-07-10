@@ -32,15 +32,15 @@ public class CameraController : MonoBehaviour
 
     void HandlePan()
     {
-        // Detectar quando o botão esquerdo do mouse é pressionado
-        if (Input.GetMouseButtonDown(0))
+        // Detectar quando o botão do meio do mouse é pressionado
+        if (Input.GetMouseButtonDown(2))
         {
             dragOrigin = cam.ScreenToWorldPoint(Input.mousePosition);
             isDragging = true;
         }
 
-        // Detectar quando o botão esquerdo do mouse é liberado
-        if (Input.GetMouseButtonUp(0))
+        // Detectar quando o botão do meio do mouse é liberado
+        if (Input.GetMouseButtonUp(2))
         {
             isDragging = false;
         }

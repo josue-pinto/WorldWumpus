@@ -3,12 +3,12 @@ using UnityEngine.UI;
 
 namespace WorldWumpus.Assets
 {
-    public class GridUIManager : MonoBehaviour
+    public class GridUIManagerScene : MonoBehaviour
     {
         public InputField rowsInput;
         public InputField columnsInput;
         public Button generateButton;
-        public GridGenerator gridGenerator;
+        public GridGeneratorManual gridGenerator;
         public Canvas uiCanvas;  // Referência ao Canvas da UI
         public Canvas canvasReset; // Canvas do botão reset Mapa
 

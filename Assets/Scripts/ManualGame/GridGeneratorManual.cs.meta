@@ -1,0 +1,28 @@
+fileFormatVersion: 2
+guid: 87f1b70dd94cf394b801e69d502e8ff6
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - gridPrefab: {fileID: 8709436560565037581, guid: 190e3d94d4059444e8451908df256fc6, type: 3}
+  - Wumpus: {fileID: 6222881704228193259, guid: 51593900ea55521418de6736a5d1f8ab, type: 3}
+  - Pit: {fileID: 8578689952938575689, guid: 5999de47242ce7f43b728b1d7f8ae7fe, type: 3}
+  - Gold: {fileID: 348586821729213408, guid: f07125636f4a4bc40ba84609f55049c3, type: 3}
+  - Player: {fileID: 3143034369080403682, guid: 70a4c0d5a1c2618448a4ad7db665b6b2, type: 3}
+  - Breeze: {fileID: 3979592759969027672, guid: d96a64f1455e64548af96633f81b2b1c, type: 3}
+  - Stench: {fileID: 880444454038491314, guid: b6834fe9d736ed742ad135c0bd66cf70, type: 3}
+  - Shine: {fileID: 2991842180681046504, guid: ee97d22d054c8454b9bd2656b5dc9396, type: 3}
+  - InitialGame: {fileID: 7779024856171405059, guid: 7691df4abd2eb374f99198ccde30aa1e, type: 3}
+  - alertText: {instanceID: 0}
+  - countGold: {instanceID: 0}
+  - countArrow: {instanceID: 0}
+  - countWumpus: {instanceID: 0}
+  - audiosource: {instanceID: 0}
+  - wumpusDeathSound: {instanceID: 0}
+  - canvasToActivate: {instanceID: 0}
+  - canvasReset: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

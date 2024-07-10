@@ -10,6 +10,8 @@ TagManager:
   - Wumpus
   - Gold
   - Arrow
+  - Shine
+  - InitialGame
   layers:
   - Default
   - TransparentFX

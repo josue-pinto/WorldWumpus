@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using WorldWumpus.Assets;
 
 public class Arrow : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class Arrow : MonoBehaviour
     public void Initialize(Vector2 direction)
     {
         this.direction = direction.normalized;
-        Destroy(gameObject, 2f); // Destroi a flecha após 2 segundos
+        Destroy(gameObject, .5f); // Destroi a flecha após 0.5 segundos
     }
 
     void Update()
@@ -20,24 +21,40 @@ public class Arrow : MonoBehaviour
     }
 
     void OnTriggerEnter2D(Collider2D collision)
+{
+    if (collision.gameObject.CompareTag("Wumpus"))
     {
-        if (collision.gameObject.CompareTag("Wumpus"))
+        // Notificar o jogador que matou o Wumpus
+        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+        if (playerMovement != null)
         {
-            // Notificar o jogador que matou o Wumpus
-            PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
             playerMovement.AddMessage("Você matou o Wumpus!");
             playerMovement.UpdateAlertText();
-
-            //Destroi o Wumpus
-            Destroy(collision.gameObject);
-            // Reproduzir som de colisão pela flecha
-            GridGenerator gridGenerator = FindAnyObjectByType<GridGenerator>();
-            gridGenerator.PlayWumpusDeathSound();
-            numberWumpus++;
-            countWumpus.text = numberWumpus.ToString();
         }
 
-        // Destruir a flecha após colidir com qualquer objeto
-        Destroy(gameObject);
+        // Destruir o Wumpus
+        Destroy(collision.gameObject);
+
+        // Reproduzir som de colisão pela flecha
+        GridGenerator gridGenerator = FindObjectOfType<GridGenerator>();
+        GridGeneratorManual gridGeneratorManual = FindObjectOfType<GridGeneratorManual>();
+        if (gridGenerator != null)
+        {
+            gridGenerator.PlayWumpusDeathSound();
+        }
+        if (gridGeneratorManual != null)
+        {
+            gridGeneratorManual.PlayWumpusDeathSound();
+        }
+        numberWumpus++;
+        if (countWumpus != null)
+        {
+            countWumpus.text = numberWumpus.ToString();
+        }
     }
+
+    // Destruir a flecha após colidir com qualquer objeto
+    Destroy(gameObject);
+}
+
 }

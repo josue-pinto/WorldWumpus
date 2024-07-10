@@ -73,7 +73,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 6
   m_Sprite: {fileID: -523545663, guid: 0cca9257c0de0a94c868b2c153e9df56, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -97,8 +97,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d80e165129c4ca4abcc1a9cbff66cfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 10
+  moveSpeed: 5
+  initialPosition: {x: 0, y: 0, z: 0}
   alertText: {fileID: 0}
+  perceptionMessages: []
   arrowPrefab: {fileID: 2778986413199687187, guid: 145e4706ba8d20341b25009ec753f9e5, type: 3}
-  alertCount: {fileID: 0}
-  collisionCount: 0
+  countGold: {fileID: 0}
+  countArrow: {fileID: 0}
+  playerId: 

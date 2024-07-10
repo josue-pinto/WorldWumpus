@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using Unity.VisualScripting;
 using System;
+using System.Linq;
+using WorldWumpus.Assets;
 
 public class GridGenerator : MonoBehaviour
 {
@@ -14,12 +16,15 @@ public class GridGenerator : MonoBehaviour
     public GameObject Player;
     public GameObject Breeze;
     public GameObject Stench;
+    public GameObject Shine; // Prefab de percepção de brilho
+    public GameObject InitialGame; // Prefab inicial do jogo
     public float pitDensity = 0.1875f;
     private int rows;
     private int columns;
     public float spacing = 1.0f;
     public float minSpacing = 0.5f;
     public int count = 0;
+    public int iterations = 0;
     private Camera mainCamera;
     public Text alertText; // Texto das ações
     public Text countGold; // Contador de ouro
@@ -51,21 +56,6 @@ public class GridGenerator : MonoBehaviour
         GenerateGrid();
     }
 
-    void Update()
-    {
-        if (selectedPrefab != null && Input.GetMouseButtonDown(0))
-        {
-            Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            Vector2Int gridPosition = GetGridPosition(mousePosition);
-
-            if (IsValidGridPosition(gridPosition))
-            {
-                CreateElementAtPosition(gridPosition, selectedPrefab);
-                DeselectPrefab(); // Deselecionar o prefab após criar o elemento
-            }
-        }
-    }
-
     void GenerateGrid()
     {
         Vector3 startPosition = CalculateStartPosition();
@@ -79,7 +69,10 @@ public class GridGenerator : MonoBehaviour
             }
         }
 
-        AddPlayer();
+        // Adicionar prefab na posição inicial (0,0)
+        Instantiate(InitialGame, CalculateElementPosition(new Vector2Int(0, 0)), Quaternion.identity, transform);
+
+        //AddPlayer();
         AddRandomElements();
     }
 
@@ -92,7 +85,7 @@ public class GridGenerator : MonoBehaviour
         return new Vector3(startX, startY, 0);
     }
 
-    public void AddPlayer()
+    public void AddPlayer(int option)
     {
         count++;
         cameraController = Camera.main.GetComponent<CameraController>();
@@ -102,12 +95,17 @@ public class GridGenerator : MonoBehaviour
         float startY = -gridHeight / 2;
         Vector3 playerPosition = new Vector3(startX, startY, 0);
         GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
+
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
-        playerMovement.playerId = Convert.ToString($"Player {count}");
-        playerMovement.Initialize(rows, columns, spacing);
-        playerMovement.alertText = alertText;
-        playerMovement.countGold = countGold;
-        playerMovement.countArrow = countArrow;
+
+        
+
+                    playerMovement.playerId = Convert.ToString($"Player {count}");
+                    playerMovement.Initialize(rows, columns, spacing);
+                    playerMovement.alertText = alertText;
+                    playerMovement.countGold = countGold;
+                    playerMovement.countArrow = countArrow;
+                    Debug.Log("Agent1");
     }
 
     void AddRandomElements()
@@ -133,6 +131,7 @@ public class GridGenerator : MonoBehaviour
         } while (occupiedPositions.Contains(goldPosition) || pitPositions.Contains(goldPosition) || (goldPosition == wumpusPosition && rand.NextDouble() > 0.5));
 
         Instantiate(Gold, CalculateElementPosition(goldPosition), Quaternion.identity, transform);
+        Instantiate(Shine, CalculateElementPosition(goldPosition), Quaternion.identity, transform); // Adicionar percepção de brilho
         occupiedPositions.Add(goldPosition);
     }
 
@@ -156,6 +155,11 @@ public class GridGenerator : MonoBehaviour
         float startY = -gridHeight / 2;
         Vector3 elementPosition = new Vector3(startX + position.x * spacing, startY + position.y * spacing, 0);
         Instantiate(elementPrefab, elementPosition, Quaternion.identity, transform);
+
+        if (elementPrefab == Wumpus)
+        {
+            Instantiate(Stench, elementPosition, Quaternion.identity, transform); // Adicionar percepção de fedor na mesma casa do Wumpus
+        }
 
         if (perceptionPrefab != null)
         {
@@ -287,6 +291,11 @@ public class GridGenerator : MonoBehaviour
         if (perceptionPrefab != null)
         {
             AddPerceptions(position, perceptionPrefab);
+        }
+
+        if (elementPrefab == Gold)
+        {
+            Instantiate(Shine, CalculateElementPosition(position), Quaternion.identity, transform); // Adicionar percepção de brilho
         }
     }
 }
