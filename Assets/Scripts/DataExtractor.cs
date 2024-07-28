@@ -63,6 +63,20 @@ public class DataExtractor : MonoBehaviour
             }
             connection.Close();
 
+            //Create Pool
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Pool (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PlayerId TEXT,
+                    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+
         }
 
         

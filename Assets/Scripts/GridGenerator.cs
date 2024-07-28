@@ -76,8 +76,11 @@ public class GridGenerator : MonoBehaviour
         {
             AddPlayer();
         }
-
+       
         AddRandomElements();
+
+        //taxa de cruzamento 85% 170 agentes
+        //txcrossover 1%
     }
 
     Vector3 CalculateStartPosition()
@@ -101,6 +104,11 @@ public class GridGenerator : MonoBehaviour
         GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
         playerMovement.playerId = $"Player{count}";
+        //add os 170 para piscina de cruzamento
+        if (playerMovement.playerId == "Player200")
+            {
+            playerMovement.Pool();
+            }
         playerMovement.Initialize(rows, columns, spacing);
         playerMovement.alertText = alertText;
         playerMovement.countGold = countGold;

@@ -1,0 +1,1 @@
+SELECT  PlayerId,Gene , Weight from Chromosome WHERE PlayerId in (SELECT PlayerId from Chromosome group by PlayerId limit 170 )
