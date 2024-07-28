@@ -41,6 +41,13 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Config. Logging")]
     public string playerId;
+     //add os 170 para piscina de cruzamento
+    //    if (playerId == "Player200")
+      //  {
+        //    Pool();
+       // }
+    
+
     public string gene;
     private string dbFilePath;
     private string connectionString;
@@ -91,7 +98,7 @@ public class PlayerMovement : MonoBehaviour
             previousPosition = targetPosition;
             targetPosition = newPosition;
             LogRegister("...", "Move", direcao); // Registrar o movimento aqui
-            Chromosome(direcao); //criar cromossomo de movimento de direção
+            Chromosome(direcao,-1); //criar cromossomo de movimento de direção
             CheckForPerceptions(newPosition);
         }
     }
@@ -164,7 +171,7 @@ public class PlayerMovement : MonoBehaviour
                     UpdateAlertText();
                     LogRegister("Catch", "Perception", "...");
                     AddMessage("Você encontrou o ouro!");
-                    Chromosome("TG"); //took the gold
+                    Chromosome("TG",+1000); //took the gold
                     AgentTheBest(); //gravando o material genético do melhor agente até o momento
                     UpdateAlertText();
                     hasGold = true;
@@ -208,17 +215,26 @@ public class PlayerMovement : MonoBehaviour
         {
             LogRegister("Pit", "Perception", "...");
             AddMessage("Você caiu em um poço!");
-            Chromosome("FP"); //Fell into the pit
-
+            Chromosome("FP",-1000); //Fell into the pit
+            //mover para o fim dos 200 agentes deixei aqui para facilitar a análise
+            CrossOver();
+            Pool();
+            Evaluate();
+            Selection();
+            PoolMutation();
             UpdateAlertText();
             Destroy(gameObject);
         }
         else if (hasWumpus && perceptionFound)
         {
             LogRegister("Wumpus", "Perception", "...");
-            Chromosome("KbW"); //Gravando cromossomo, KbW (killed by the Wumpus)
+            Chromosome("KbW",-1000); //Gravando cromossomo, KbW (killed by the Wumpus)
             AddMessage("Você morreu para o Wumpus!");
-
+            //mover para o fim dos 200 agentes deixei aqui para facilitar a análise
+            CrossOver();
+            Pool();
+            Evaluate();
+            Selection();
             UpdateAlertText();
             Destroy(gameObject);
         }
@@ -307,7 +323,7 @@ public class PlayerMovement : MonoBehaviour
                 else
                 {
                     LogRegister("Not Arrow", "DirectionArrow", "...");
-                    Chromosome("NA"); //gravando cromossomo NA (Not Arrow)
+                    Chromosome("NA",-1); //gravando cromossomo NA (Not Arrow)
                     AddMessage("Você não possui mais flechas.");
                     UpdateAlertText();
                     RandomDirection();
@@ -318,6 +334,11 @@ public class PlayerMovement : MonoBehaviour
 
     void RandomDirection()
     {
+       //colocando a rota dos mutantes para avaliar parei aqui 24 de julho
+       //if PoolMutationtoEvaluate ()
+            {
+        };
+        //aqui ta pegando um caminho aleatório, somente pode ser usado na primeira rodada
         int direction = Random.Range(0, 4);
         Vector2Int directionVector;
         string direcao;
@@ -402,9 +423,11 @@ public class PlayerMovement : MonoBehaviour
         if (wumpus != null)
         {
             LogRegister("Kill", "ShootArrow", "...");
-            Chromosome("KW"); // gravando cromossomo KW (Killed the Wumpus)
-            AgentTheBest(); //gravando o material genético do melhor agente até o momento
-            Selection(); //gravando a melhor seleção, que deu menos passos
+            Chromosome("KW", +1000); // gravando cromossomo KW (Killed the Wumpus)
+            //AgentTheBest(); //gravando o material genético do melhor agente até o momento
+            //Pool(); //TESTE PISCINA
+            //Evaluate(); //gravando a avaliacaõa para posterior selecao
+            //Selection(); //gravando a selecao para posterior cruzamento
             AddMessage("Você matou o Wumpus!");
             UpdateAlertText();
             hasWumpus = false;
@@ -428,11 +451,11 @@ public class PlayerMovement : MonoBehaviour
                 command.ExecuteNonQuery();
             }
             connection.Close();
-
+            //FALTA CRIAR O METODO QUE SAIU COM SUCESSO OU SEJA VOLTOU A 0.0
             connection.Open();
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "CREATE TABLE IF NOT EXISTS Chromosome (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Gene TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.CommandText = "CREATE TABLE IF NOT EXISTS Chromosome (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Gene TEXT, Weight SINGLE, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
                 command.ExecuteNonQuery();
             }
             connection.Close();
@@ -445,6 +468,10 @@ public class PlayerMovement : MonoBehaviour
             }
             connection.Close();
 
+            /*
+             * Falta criar a formula e ou estrategia de cruzamento
+             * |
+            */
             connection.Open();
             using (var command = connection.CreateCommand())
             {
@@ -456,7 +483,22 @@ public class PlayerMovement : MonoBehaviour
             connection.Open();
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "CREATE TABLE IF NOT EXISTS Selection (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT,Steps NUMBER, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.CommandText = "CREATE TABLE IF NOT EXISTS Evaluate (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT,Fitness NUMBER, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS Pool (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Gene TEXT, Weight SINGLE, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS PoolMutation (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Gene TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
                 command.ExecuteNonQuery();
             }
             connection.Close();
@@ -500,7 +542,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     //Criando tabela do Cromossomo para fazer a reproducao e mutação posteriormente.
-    public void Chromosome(string gene)
+    public void Chromosome(string gene, Single weight)
     {
         Task createChromosome = Task.Run(() =>
         {
@@ -509,9 +551,10 @@ public class PlayerMovement : MonoBehaviour
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "INSERT INTO Chromosome (PlayerId, Gene) VALUES (@playerId, @gene)";
+                    command.CommandText = "INSERT INTO Chromosome (PlayerId, Gene, Weight) VALUES (@playerId, @gene, @weight)";
                     command.Parameters.AddWithValue("@playerId", playerId);
-                    command.Parameters.AddWithValue("@gene", gene);  
+                    command.Parameters.AddWithValue("@gene", gene);
+                    command.Parameters.AddWithValue("@weight", weight);
                     command.ExecuteNonQuery();
                 }
                 connection.Close();
@@ -534,7 +577,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    //Criando tabela de Melhores Agentes (AgentTheBest), quem pegou o ouro, matou o wumpus e conseguiu sair* (falta o sair)
+    //Criando tabela de Melhores Agentes (AgentTheBest), quem pegou o ouro, matou o wumpus e conseguiu sair* (falta o sair) passo 5 melhor individuo I3 do slide
     public void AgentTheBest()
     {
         Task createAgentTheBest = Task.Run(() =>
@@ -568,7 +611,47 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    //Criando a tabela de CrossOver de 1 ponto, isto é trocar um Gene entre dois Pais e criar um novo ser
+    // primeira rodada pega somente 100 pois no metodo de selecao descarta os piores 100
+    //Criando tabela de Piscina para cruzamento dos 170(85%) (total de 200) os 15 % serao usados aula 11 1:41 passo 4 substituir os individuos pelos novos misturando 85% + 15% ordena e elimina
+
+    public void Pool()
+    {
+        Task createPool = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    //add os 170 para piscina de cruzamento
+                    if (playerId == "Player200")
+                    {
+                    //command.CommandText = "INSERT INTO Pool (PlayerId, Gene , Weight )  SELECT  PlayerId,Gene , Weight from Chromosome WHERE PlayerId in (SELECT PlayerId from Chromosome group by PlayerId limit 170 )";
+                    command.CommandText = "INSERT INTO Pool (PlayerId, Gene , Weight )  SELECT  PlayerId,Gene , Weight from Chromosome WHERE PlayerId in (SELECT PlayerId from Selection group by PlayerId limit 170 )";
+                    command.Parameters.AddWithValue("@playerId", playerId);
+                    command.ExecuteNonQuery();
+                    }
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createPool);
+
+        try
+        {
+            createPool.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to CreatePool to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createPool);
+        }
+    }
+    //Criando a tabela de CrossOver de 1 ponto, isto é trocar um Gene entre dois Pais e criar um novo ser sem erros (morreu ou caiu no poço) 3.2.1 - Aula 11 - 1:37
     public void CrossOver()
     {
         Task createCrossOver = Task.Run(() =>
@@ -578,8 +661,12 @@ public class PlayerMovement : MonoBehaviour
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "INSERT INTO CrossOver (PlayerId) VALUES (@playerId)";
-                    command.Parameters.AddWithValue("@playerId", playerId);
+                    //command.CommandText = "INSERT INTO CrossOver (PlayerId, Gene  )  SELECT  PlayerId,Gene  FROM Pool where Weight  <>   '-1000' ";
+                    command.CommandText = "INSERT INTO CrossOver(PlayerId, Gene)  SELECT PlayerId, Gene  FROM Pool where id in (SELECT id - 1 from Pool where Weight = '-1000'   ) ";
+                    //command.CommandText = "DELETE CrossOver(PlayerId, Gene)  SELECT PlayerId, Gene  FROM Pool where id in (SELECT id - 1 from Pool where Weight = '-1000'   ) ";
+                    //Permutar dois agentes Mutação 3.3.1 aula 11 1h37m
+
+                    //command.Parameters.AddWithValue("@playerId", playerId);
                     command.ExecuteNonQuery();
                 }
                 connection.Close();
@@ -602,7 +689,138 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    //Criando a tabela de Seleção dos menores passos, função fitness
+    //Criando a tabela de piscina de mutacao de 1 ponto, Permutar dois agentes Mutação 3.3.1 aula 11 1h37m isto é trocar um Gene entre dois Pais 
+    public void PoolMutation()
+    {
+        Task createPoolMutation = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    //SELECT PlayerId,Gene FROM (select PlayerId, Gene   from CrossOver  GROUP by PlayerId ORDER by random() LIMIT 2 )   ASC limit 2
+
+                    command.CommandText = "INSERT INTO PoolMutation(PlayerId, Gene)  SELECT PlayerId, Gene  FROM CrossOver where id in (SELECT id - 1 from Pool where Weight = '-1000'   ) ";
+                    // eliminar a metede depois da mutacao?
+
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createPoolMutation);
+
+        try
+        {
+            createPoolMutation.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to PoolMutation to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createPoolMutation);
+        }
+    }
+    // Apos Mutacao avaliar novamente
+    //pegando array do novo cromossomo após a mutação para rodar na table 4 x 4 e avaliar depois com fitness
+    public void PoolMutationtoEvaluate()
+    {
+        Task createPoolMutationtoEvaluate = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT Gene FROM  PoolMutation ) ";
+                    // Array para armazenar os dados
+                    string[] resultados;
+                    var reader = command.ExecuteReader();
+                    // Contar o número de linhas
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        count++;
+                    }
+
+                    // Inicializar o array com o tamanho correto
+                    resultados = new string[count];
+                    connection.Close();
+                    reader = command.ExecuteReader();
+                    int index = 0;
+                    while (reader.Read())
+                    {
+                        resultados[index] = reader["Gene"].ToString();
+                        index++;
+                    }
+
+                    reader.Close();
+                    // Exibir os resultados
+                    foreach (var item in resultados)
+                    {
+                        Console.WriteLine(item);
+                    }
+                }
+
+                connection.Close();
+              
+            }
+        });
+
+        pendingTasks.Add(createPoolMutationtoEvaluate);
+
+        try
+        {
+            createPoolMutationtoEvaluate.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to PoolMutation to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createPoolMutationtoEvaluate);
+        }
+    }
+
+    //Criando a tabela de Avaliacao para posterior Seleção com  função fitness calculada (+4) + (-7) = 3 -- aula 11 time 1:24:14
+    public void Evaluate()
+    {
+        Task createEvaluate = Task.Run(() =>
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "INSERT INTO Evaluate (PlayerId,Fitness)  SELECT PlayerId, sum(Weight) from Chromosome GROUP by PlayerId";
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        });
+
+        pendingTasks.Add(createEvaluate);
+
+        try
+        {
+            createEvaluate.Wait();
+        }
+        catch (Exception ex)  // Exceção adicionada aqui
+        {
+            Debug.LogError($"Failed to Evaluate to database. Error: {ex.Message}");
+        }
+        finally
+        {
+            pendingTasks.Remove(createEvaluate);
+        }
+    }
+
+    //Criando a tabela de  Seleção para posterior cruzamento pega 2 e comparada, meti o corte de 100 e mata os 100 piores = 200
     public void Selection()
     {
         Task createSelection = Task.Run(() =>
@@ -612,8 +830,7 @@ public class PlayerMovement : MonoBehaviour
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = "INSERT INTO Selection (PlayerId,Steps)  SELECT PlayerId, count(playerid)  from CrossOver group by PlayerId";
-                    command.Parameters.AddWithValue("@playerId", playerId);
+                    command.CommandText = "INSERT INTO Selection (PlayerId,Fitness)  SELECT PlayerId, Fitness from Evaluate GROUP by PlayerId ORDER by 2 DESC limit 100";
                     command.ExecuteNonQuery();
                 }
                 connection.Close();
@@ -628,7 +845,7 @@ public class PlayerMovement : MonoBehaviour
         }
         catch (Exception ex)  // Exceção adicionada aqui
         {
-            Debug.LogError($"Failed to CrossOver to database. Error: {ex.Message}");
+            Debug.LogError($"Failed to Selection to database. Error: {ex.Message}");
         }
         finally
         {

@@ -1,0 +1,1 @@
+select  PlayerId from Chromosome group by PlayerId limit 170 
