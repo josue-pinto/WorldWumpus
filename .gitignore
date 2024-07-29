@@ -73,6 +73,7 @@ crashlytics-build.properties
 mestrado
 mestrado.pub
 .gitignore.swp
+Assets/PlayerActionsLog.db
 Assets/Scripts/echo
 Assets/Scripts/port445=no_netbios
 Assets/Scripts/protocol_vers_map=6
