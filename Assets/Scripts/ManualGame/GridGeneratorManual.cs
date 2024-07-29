@@ -128,12 +128,12 @@ namespace WorldWumpus.Assets
             float startY = -gridHeight / 2;
             Vector3 playerPosition = new Vector3(startX, startY, 0);
             GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
-            PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
-            playerMovement.playerId = Convert.ToString($"Player {count}");
-            playerMovement.Initialize(rows, columns, spacing);
-            playerMovement.alertText = alertText;
-            playerMovement.countGold = countGold;
-            playerMovement.countArrow = countArrow;
+            Agent1 agent1 = playerObject.GetComponent<Agent1>();
+            agent1.playerId = Convert.ToString($"Player {count}");
+            agent1.Initialize(rows, columns, spacing);
+            agent1.alertText = alertText;
+            agent1.countGold = countGold;
+            agent1.countArrow = countArrow;
         }
 
         Vector2Int AddElementRandomly(GameObject elementPrefab, System.Random rand, HashSet<Vector2Int> occupiedPositions, GameObject perceptionPrefab, HashSet<Vector2Int> pitPositions)
@@ -206,25 +206,25 @@ namespace WorldWumpus.Assets
             }
         }
 
-       public void PlayWumpusDeathSound()
-    {
-        if (audiosource != null && wumpusDeathSound != null)
+        public void PlayWumpusDeathSound()
         {
-            audiosource.PlayOneShot(wumpusDeathSound);
-            Arrow arrow = FindAnyObjectByType<Arrow>();
-            arrow.countWumpus = countWumpus;
+            if (audiosource != null && wumpusDeathSound != null)
+            {
+                audiosource.PlayOneShot(wumpusDeathSound);
+                Arrow arrow = FindAnyObjectByType<Arrow>();
+                arrow.countWumpus = countWumpus;
+            }
         }
-    }
 
         // Este método será chamado quando o botão for clicado
-    public void ResetScene()
-    {
-        // Obtém o nome da cena atual
-        string currentSceneName = SceneManager.GetActiveScene().name;
+        public void ResetScene()
+        {
+            // Obtém o nome da cena atual
+            string currentSceneName = SceneManager.GetActiveScene().name;
 
-        // Carrega a cena atual novamente
-        SceneManager.LoadScene(currentSceneName);
-    }
+            // Carrega a cena atual novamente
+            SceneManager.LoadScene(currentSceneName);
+        }
 
         // Métodos para seleção de prefabs baseados em radio buttons
         void CheckSelectedPrefab()

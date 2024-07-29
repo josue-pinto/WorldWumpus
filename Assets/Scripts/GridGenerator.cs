@@ -9,29 +9,39 @@ using WorldWumpus.Assets;
 public class GridGenerator : MonoBehaviour
 {
     // Referências existentes
+    [Header("Config. Prefabs")]
     public GameObject gridPrefab;
     public GameObject Wumpus;
     public GameObject Pit;
     public GameObject Gold;
-    public GameObject Player;
+    public GameObject Player1;
+    public GameObject Player2;
+    public GameObject Player3;
     public GameObject Breeze;
     public GameObject Stench;
     public GameObject Shine; // Prefab de percepção de brilho
     public GameObject InitialGame; // Prefab inicial do jogo
+
+    [Header("Config. Mapa")]
     public float pitDensity = 0.1875f;
     private int rows;
     private int columns;
     public float spacing = 1.0f;
     public float minSpacing = 0.5f;
     public int count = 0;
-    public int iterations = 0;
-    private Camera mainCamera;
+    public int iterations = 5;
+    private int contador = 1;
+
+    [Header("Config. Dialog")]
     public Text alertText; // Texto das ações
     public Text countGold; // Contador de ouro
     public Text countArrow; // Contador Flechas
     public Text countWumpus; // Contador de Wumpus mortos
     private int numberWumpus;
     private CameraController cameraController;
+    private Camera mainCamera;
+
+    [Header("Config. HUD")]
     public AudioSource audiosource;
     public AudioClip wumpusDeathSound;
 
@@ -72,7 +82,6 @@ public class GridGenerator : MonoBehaviour
         // Adicionar prefab na posição inicial (0,0)
         Instantiate(InitialGame, CalculateElementPosition(new Vector2Int(0, 0)), Quaternion.identity, transform);
 
-        //AddPlayer();
         AddRandomElements();
     }
 
@@ -94,18 +103,39 @@ public class GridGenerator : MonoBehaviour
         float startX = -gridWidth / 2;
         float startY = -gridHeight / 2;
         Vector3 playerPosition = new Vector3(startX, startY, 0);
-        GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
 
-        PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
-
-        
-
-                    playerMovement.playerId = Convert.ToString($"Player {count}");
-                    playerMovement.Initialize(rows, columns, spacing);
-                    playerMovement.alertText = alertText;
-                    playerMovement.countGold = countGold;
-                    playerMovement.countArrow = countArrow;
-                    Debug.Log("Agent1");
+        if (option == 0)
+        {
+            GameObject playerObject = Instantiate(Player1, playerPosition, Quaternion.identity, transform);
+            Agent1 agent1 = playerObject.GetComponent<Agent1>();
+            agent1.playerId = Convert.ToString($"Player {count}");
+            agent1.Initialize(rows, columns, spacing);
+            agent1.alertText = alertText;
+            agent1.countGold = countGold;
+            agent1.countArrow = countArrow;
+            Debug.Log("Agent1");
+        }
+        else if (option == 1)
+        {
+            GameObject playerObject = Instantiate(Player2, playerPosition, Quaternion.identity, transform);
+            Agent2 agent2 = playerObject.GetComponent<Agent2>();
+            agent2.playerId = Convert.ToString($"Player {count}");
+            agent2.Initialize(rows, columns, spacing);
+            agent2.alertText = alertText;
+            agent2.countGold = countGold;
+            agent2.countArrow = countArrow;
+            Debug.Log("Agent2");
+        }
+        else if (option == 2)
+        {
+            GameObject playerObject = Instantiate(Player3, playerPosition, Quaternion.identity, transform);
+            Agent3 agent3 = playerObject.GetComponent<Agent3>();
+            agent3.playerId = Convert.ToString($"Player {count}");
+            agent3.Initialize(rows, columns, spacing);
+            agent3.alertText = alertText;
+            agent3.countGold = countGold;
+            agent3.countArrow = countArrow;
+        }
     }
 
     void AddRandomElements()
@@ -298,4 +328,12 @@ public class GridGenerator : MonoBehaviour
             Instantiate(Shine, CalculateElementPosition(position), Quaternion.identity, transform); // Adicionar percepção de brilho
         }
     }
+public void ContadorIteracoes (int opcao) //Método para realizar o número de iterações
+{
+    if (contador < iterations)
+    {
+        AddPlayer(opcao);
+        contador++;
+    } 
+}
 }

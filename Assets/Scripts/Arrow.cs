@@ -21,40 +21,40 @@ public class Arrow : MonoBehaviour
     }
 
     void OnTriggerEnter2D(Collider2D collision)
-{
-    if (collision.gameObject.CompareTag("Wumpus"))
     {
-        // Notificar o jogador que matou o Wumpus
-        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
-        if (playerMovement != null)
+        if (collision.gameObject.CompareTag("Wumpus"))
         {
-            playerMovement.AddMessage("Você matou o Wumpus!");
-            playerMovement.UpdateAlertText();
+            // Notificar o jogador que matou o Wumpus
+            Agent1 agent1 = FindObjectOfType<Agent1>();
+            if (agent1 != null)
+            {
+                agent1.AddMessage("Você matou o Wumpus!");
+                agent1.UpdateAlertText();
+            }
+
+            // Destruir o Wumpus
+            Destroy(collision.gameObject);
+
+            // Reproduzir som de colisão pela flecha
+            GridGenerator gridGenerator = FindObjectOfType<GridGenerator>();
+            GridGeneratorManual gridGeneratorManual = FindObjectOfType<GridGeneratorManual>();
+            if (gridGenerator != null)
+            {
+                gridGenerator.PlayWumpusDeathSound();
+            }
+            if (gridGeneratorManual != null)
+            {
+                gridGeneratorManual.PlayWumpusDeathSound();
+            }
+            numberWumpus++;
+            if (countWumpus != null)
+            {
+                countWumpus.text = numberWumpus.ToString();
+            }
         }
 
-        // Destruir o Wumpus
-        Destroy(collision.gameObject);
-
-        // Reproduzir som de colisão pela flecha
-        GridGenerator gridGenerator = FindObjectOfType<GridGenerator>();
-        GridGeneratorManual gridGeneratorManual = FindObjectOfType<GridGeneratorManual>();
-        if (gridGenerator != null)
-        {
-            gridGenerator.PlayWumpusDeathSound();
-        }
-        if (gridGeneratorManual != null)
-        {
-            gridGeneratorManual.PlayWumpusDeathSound();
-        }
-        numberWumpus++;
-        if (countWumpus != null)
-        {
-            countWumpus.text = numberWumpus.ToString();
-        }
+        // Destruir a flecha após colidir com qualquer objeto
+        Destroy(gameObject);
     }
-
-    // Destruir a flecha após colidir com qualquer objeto
-    Destroy(gameObject);
-}
 
 }

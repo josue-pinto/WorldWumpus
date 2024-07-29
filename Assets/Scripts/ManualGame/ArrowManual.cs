@@ -26,7 +26,7 @@ namespace WorldWumpus.Assets
             if (collision.gameObject.CompareTag("Wumpus"))
             {
                 // Notificar o jogador que matou o Wumpus
-                PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
+                Agent1 agent1 = FindObjectOfType<Agent1>();
                 //playerMovement.AddMessage("Você matou o Wumpus!");
                 //playerMovement.UpdateAlertText();
 

@@ -9,13 +9,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System;
 
-public class Agent2 : MonoBehaviour
+public class Agent3 : MonoBehaviour
 {
     [Header("Config. Player")]
     public float moveSpeed = 5f;
     private Vector3 targetPosition;
     private Vector3 previousPosition;
-    private Vector3 lastCheckedPosition;  // Nova variável
+    public Vector3 initialPosition;
+    private Vector3 lastCheckedPosition;
     private int rows;
     private int columns;
     private float spacing;
@@ -24,7 +25,6 @@ public class Agent2 : MonoBehaviour
     public Text alertText;
     public List<string> perceptionMessages = new List<string>();
     public GameObject arrowPrefab;
-    public GameObject wumpus;
     private bool hasShotArrow = false;
     private bool isMoving = false;
 
@@ -32,35 +32,31 @@ public class Agent2 : MonoBehaviour
     public Text countGold;
     private int numberGold = 0;
     public Text countArrow;
-    public int numberArrow = 1;
-    bool hasGold;
-    public bool hasWumpus;
-    string inicio;
+    private int numberArrow = 1;
+    private bool hasGold;
 
     [Header("Config. Logging")]
     public string playerId;
     private string dbFilePath;
     private string connectionString;
-    private List<Task> pendingTasks = new List<Task>();  // Lista de tarefas pendentes
+    private List<Task> pendingTasks = new List<Task>();
 
     void Start()
     {
-        // Inicializa a conexão/criação do banco de dados
-        dbFilePath = Path.Combine(Application.dataPath, "Agent2.db");
+        dbFilePath = Path.Combine(Application.dataPath, "Agent3.db");
         connectionString = "URI=file:" + dbFilePath;
         InitializeDatabase();
 
-        // Declara os contadores iniciais
         countGold.text = numberGold.ToString();
         countArrow.text = numberArrow.ToString();
         targetPosition = transform.position;
-        lastCheckedPosition = targetPosition;  // Inicializa com a posição inicial do jogador
+        initialPosition = transform.position;
+        lastCheckedPosition = targetPosition;
         alertText.text = "";
         isMoving = false;
         hasGold = false;
-        hasWumpus = true;
         CheckForPerceptions(targetPosition);
-        StartCoroutine(PlayerSimulation());  // Inicia a simulação do jogador
+        StartCoroutine(PlayerSimulation());
     }
 
     void Update()
@@ -83,17 +79,16 @@ public class Agent2 : MonoBehaviour
         {
             if (!isMoving)
             {
-                // Verifique se alguma condição específica foi atendida
-                if (hasGold || !hasWumpus)
+                if (hasGold && targetPosition == initialPosition)
                 {
-                    yield break;  // Termina a corrotina se a condição for atendida
+                    LogRegister("Winner", "Perception", "...");
+                    AddMessage("Parabéns, você venceu o jogo!");
+                    UpdateAlertText();
+                    yield break;
                 }
 
-                // Move-se aleatoriamente
                 RandomDirection();
-
-                // Aguarda um pouco antes de se mover novamente
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(.5f);
             }
             yield return null;
         }
@@ -102,11 +97,11 @@ public class Agent2 : MonoBehaviour
     public void Initialize(int rows, int columns, float spacing)
     {
         this.rows = rows;
-        this.columns = columns;
+        this.columns = rows;
         this.spacing = spacing;
     }
 
-    void Move(Vector2Int direction, string direcao)
+    void Move(Vector2Int direction, string directionName)
     {
         Vector3 newPosition = targetPosition + new Vector3(direction.x * spacing, direction.y * spacing, 0);
 
@@ -114,15 +109,15 @@ public class Agent2 : MonoBehaviour
         {
             previousPosition = targetPosition;
             targetPosition = newPosition;
-            LogRegister("...", "Move", direcao);  // Registrar o movimento aqui
+            LogRegister("...", "Move", directionName);
             isMoving = true;
         }
     }
 
     bool IsWithinGrid(Vector3 position)
     {
-        float gridWidth = (columns) * spacing;
-        float gridHeight = (rows) * spacing;
+        float gridWidth = columns * spacing;
+        float gridHeight = rows * spacing;
 
         float startX = -gridWidth / 2;
         float startY = -gridHeight / 2;
@@ -142,7 +137,7 @@ public class Agent2 : MonoBehaviour
         bool perceptionFound = false;
         bool foundBreeze = false;
         bool foundStench = false;
-        bool hasPit = false;
+        bool live = true;
 
         foreach (var collider in colliders)
         {
@@ -158,38 +153,28 @@ public class Agent2 : MonoBehaviour
             }
             else if (collider.CompareTag("Pit"))
             {
-                hasPit = true;
+                live = false;
                 perceptionFound = true;
+                LogRegister("Pit", "Perception", "...");
+                AddMessage("Você caiu em um poço!");
+                UpdateAlertText();
+                Destroy(gameObject);
             }
             else if (collider.CompareTag("Wumpus"))
             {
-                if (hasWumpus)
-                {
-                    perceptionFound = true;
-                }
-                else
-                {
-                    LogRegister("Stench", "Perception", "...");
-                    AddMessage("Você sente um fedor!");
-                    UpdateAlertText();
-                    RandomAction(1);
-                }
+                live = false;
+                perceptionFound = true;
+                LogRegister("Wumpus", "Perception", "...");
+                AddMessage("Você morreu para o Wumpus!");
+                UpdateAlertText();
+                Destroy(gameObject);
             }
             else if (collider.CompareTag("Gold"))
             {
                 if (!hasGold)
                 {
                     perceptionFound = true;
-                    LogRegister("Light", "Perception", "...");
-                    AddMessage("Você percebe um brilho!");
-                    UpdateAlertText();
-                    LogRegister("Catch", "Perception", "...");
-                    AddMessage("Você encontrou o ouro!");
-                    UpdateAlertText();
                     hasGold = true;
-                    RandomAction(1);
-                    numberGold++;
-                    countGold.text = numberGold.ToString();
                 }
                 else
                 {
@@ -201,51 +186,53 @@ public class Agent2 : MonoBehaviour
                 }
             }
         }
+        if (live)
+        {
+            if (foundBreeze && foundStench)
+            {
+                LogRegister("Breeze and Stench", "Perception", "...");
+                AddMessage("Você sente uma brisa e um fedor!");
+                UpdateAlertText();
+                RandomAction(2);
+            }
+            else if (foundStench)
+            {
+                LogRegister("Stench", "Perception", "...");
+                AddMessage("Você sente um fedor!");
+                UpdateAlertText();
+                RandomAction(2);
+            }
+            else if (foundBreeze)
+            {
+                LogRegister("Breeze", "Perception", "...");
+                AddMessage("Você sente uma brisa!");
+                UpdateAlertText();
+                RandomAction(0);
+            }
 
-        if (foundBreeze && foundStench && !hasPit)
-        {
-            LogRegister("Breeze and Stench", "Perception", "...");
-            AddMessage("Você sente uma brisa e um fedor!");
-            UpdateAlertText();
-            RandomAction(2);
-        }
-        else if (foundStench && !hasPit)
-        {
-            LogRegister("Stench", "Perception", "...");
-            AddMessage("Você sente um fedor!");
-            UpdateAlertText();
-            RandomAction(2);
-        }
-        else if (foundBreeze && !hasPit)
-        {
-            LogRegister("Breeze", "Perception", "...");
-            AddMessage("Você sente uma brisa!");
-            UpdateAlertText();
-            RandomAction(0);
-        }
-        else if (hasPit)
-        {
-            LogRegister("Pit", "Perception", "...");
-            AddMessage("Você caiu em um poço!");
-            UpdateAlertText();
-            Destroy(gameObject);
-        }
-        else if (hasWumpus && perceptionFound)
-        {
-            LogRegister("Wumpus", "Perception", "...");
-            AddMessage("Você morreu para o Wumpus!");
-            UpdateAlertText();
-            Destroy(gameObject);
-        }
-        else if (!perceptionFound)
-        {
-            LogRegister("Nothing", "Perception", "...");
-            AddMessage("Você não sente nada.");
-            UpdateAlertText();
-            RandomAction(1);
+            else if (hasGold)
+            {
+                LogRegister("Light", "Perception", "...");
+                AddMessage("Você percebe um brilho!");
+                UpdateAlertText();
+                LogRegister("Catch", "Perception", "...");
+                AddMessage("Você encontrou o ouro!");
+                UpdateAlertText();
+                //RandomAction(1); // Não deveria chamar RandomAction(1) aqui, a menos que haja uma razão específica
+                numberGold++;
+                countGold.text = numberGold.ToString();
+            }
+            else if (!perceptionFound)
+            {
+                LogRegister("Nothing", "Perception", "...");
+                AddMessage("Você não sente nada.");
+                UpdateAlertText();
+                RandomAction(1);
+            }
         }
         return hasGold;
     }
+
 
     public void AddMessage(string message)
     {
@@ -278,17 +265,18 @@ public class Agent2 : MonoBehaviour
         alertText.text = formattedText;
     }
 
-    void ShootArrow(Vector2 direction, string direcao)
+    void ShootArrow(Vector2 direction, string directionName)
     {
         Vector3 arrowPosition = transform.position + new Vector3(direction.x * spacing, direction.y * spacing, 0);
         GameObject arrow = Instantiate(arrowPrefab, arrowPosition, Quaternion.identity);
         Arrow arrowScript = arrow.GetComponent<Arrow>();
         arrowScript.Initialize(direction);
 
-        LogRegister("...", "ShootArrow", direcao);
+        LogRegister("...", "ShootArrow", directionName);
+        UpdateArrowCount();
     }
 
-    void SituationArrow()
+    void UpdateArrowCount()
     {
         if (numberArrow > 0)
         {
@@ -319,8 +307,8 @@ public class Agent2 : MonoBehaviour
                 }
                 else
                 {
-                    LogRegister("Random", "Perception", "...");
-                    AddMessage("Você agiu de forma aleatória e tropeçou em seus próprios passos.");
+                    LogRegister("NoArrow", "Action", "...");
+                    AddMessage("Você não possui mais flechas!");
                     UpdateAlertText();
                     RandomDirection();
                 }
@@ -328,138 +316,152 @@ public class Agent2 : MonoBehaviour
         }
     }
 
+
     void RandomDirection()
     {
         int direction = UnityEngine.Random.Range(0, 4);
         Vector2Int directionVector;
-        string direcao;
+        string directionName;
         switch (direction)
         {
             case 0:
                 directionVector = Vector2Int.up;
-                direcao = "N";
+                directionName = "N";
                 break;
             case 1:
                 directionVector = Vector2Int.down;
-                direcao = "S";
+                directionName = "S";
                 break;
             case 2:
                 directionVector = Vector2Int.left;
-                direcao = "O";
+                directionName = "O";
                 break;
             case 3:
                 directionVector = Vector2Int.right;
-                direcao = "L";
+                directionName = "L";
                 break;
             default:
                 directionVector = Vector2Int.zero;
-                direcao = "P";
+                directionName = "P";
                 break;
         }
-        Move(directionVector, direcao);
+        Move(directionVector, directionName);
     }
 
     void BreezerCondition()
     {
-        RandomDirection();
+        // Gera um número aleatório entre 0 e 100
+        int chance = UnityEngine.Random.Range(0, 100);
+
+        // 80% de chance de retornar à casa anterior
+        if (chance < 80)
+        {
+            Move(Vector2Int.zero, "P"); // Move para a posição anterior
+        }
+        // 20% de chance de avançar para outra casa
+        else
+        {
+            RandomDirection();
+        }
     }
+
 
     void DirectionArrow()
     {
-        int direction = UnityEngine.Random.Range(0, 4);
-        Vector2 directionVector;
-        string direcao;
-        switch (direction)
+        if (numberArrow > 0)
         {
-            case 0:
-                directionVector = Vector2.up;
-                direcao = "N";
-                break;
-            case 1:
-                directionVector = Vector2.down;
-                direcao = "S";
-                break;
-            case 2:
-                directionVector = Vector2.left;
-                direcao = "O";
-                break;
-            case 3:
-                directionVector = Vector2.right;
-                direcao = "L";
-                break;
-            default:
-                directionVector = Vector2.zero;
-                direcao = "P";
-                break;
-        }
-        ShootArrow(directionVector, direcao);
-        SituationArrow();
-        hasShotArrow = true;
-    }
-
-    void isWumpus(GameObject wumpus)
-    {
-        if (wumpus != null)
-        {
-            LogRegister("Kill", "ShootArrow", "...");
-            AddMessage("Você matou o Wumpus!");
-            UpdateAlertText();
-            hasWumpus = false;
-            Destroy(wumpus);
-        }
-    }
-
-    private void InitializeDatabase()
-    {
-        if (!File.Exists(dbFilePath))
-        {
-            SqliteConnection.CreateFile(dbFilePath);
-        }
-
-        using (var connection = new SqliteConnection(connectionString))
-        {
-            connection.Open();
-            using (var command = connection.CreateCommand())
+            int direction = UnityEngine.Random.Range(0, 4);
+            Vector2 directionVector;
+            string directionName;
+            switch (direction)
             {
-                command.CommandText = "CREATE TABLE IF NOT EXISTS PlayerActions (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Perception TEXT, Action TEXT, Direction TEXT)";
-                command.ExecuteNonQuery();
+                case 0: directionVector = Vector2.up; directionName = "N"; break;
+                case 1: directionVector = Vector2.down; directionName = "S"; break;
+                case 2: directionVector = Vector2.left; directionName = "O"; break;
+                case 3: directionVector = Vector2.right; directionName = "L"; break;
+                default: directionVector = Vector2.zero; directionName = "P"; break;
             }
+
+            ShootArrow(directionVector, directionName);
+            UpdateArrowCount();
+            hasShotArrow = true;
+        }
+        else
+        {
+            AddMessage("Você não possui mais flechas!");
+            UpdateAlertText();
         }
     }
 
-    public void LogRegister(string perception, string action, string direction)
+    void LogRegister(string perception, string action, string direction)
     {
-        Task logTask = Task.Run(() =>
+        Task task = Task.Run(() =>
         {
-            using (var connection = new SqliteConnection(connectionString))
+            try
             {
-                connection.Open();
-                using (var command = connection.CreateCommand())
+                using (SqliteConnection connection = new SqliteConnection(connectionString))
                 {
-                    command.CommandText = "INSERT INTO PlayerActions (PlayerId, Perception, Action, Direction) VALUES (@playerId, @perception, @action, @direction)";
-                    command.Parameters.AddWithValue("@playerId", playerId);
-                    command.Parameters.AddWithValue("@perception", perception);
-                    command.Parameters.AddWithValue("@action", action);
-                    command.Parameters.AddWithValue("@direction", direction);
-                    command.ExecuteNonQuery();
+                    connection.Open();
+
+                    string query = "INSERT INTO PlayerActions (PlayerId, Perception, Action, Direction, Timestamp) VALUES (@playerId, @perception, @action, @direction, @timestamp)";
+                    using (SqliteCommand command = new SqliteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@playerId", playerId);
+                        command.Parameters.AddWithValue("@perception", perception);
+                        command.Parameters.AddWithValue("@action", action);
+                        command.Parameters.AddWithValue("@direction", direction);
+                        command.Parameters.AddWithValue("@timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                        command.ExecuteNonQuery();
+                    }
                 }
-                connection.Close();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error logging player action: " + ex.Message);
             }
         });
 
-        pendingTasks.Add(logTask);
+        pendingTasks.Add(task);
+    }
 
-        try
+    void InitializeDatabase()
+    {
+        if (!File.Exists(dbFilePath))
         {
-            logTask.Wait();
+            using (SqliteConnection connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+
+                string createTableQuery = @"
+                    CREATE TABLE IF NOT EXISTS PlayerActions (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        PlayerId TEXT,
+                        Perception TEXT,
+                        Action TEXT,
+                        Direction TEXT,
+                        Timestamp TEXT
+                    )";
+
+                using (SqliteCommand command = new SqliteCommand(createTableQuery, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
         }
-        catch (Exception ex)
+    }
+
+    void OnDestroy()
+    {
+        if (pendingTasks.Count > 0)
         {
-            Debug.LogError($"Failed to log action to database. Error: {ex.Message}");
+            Task.WhenAll(pendingTasks).ContinueWith(_ =>
+            {
+                Application.Quit();
+            });
         }
-        finally
+        else
         {
-            pendingTasks.Remove(logTask);
+            Application.Quit();
         }
     }
 }

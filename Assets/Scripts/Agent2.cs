@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System;
 
-public class PlayerMovement : MonoBehaviour
+public class Agent2 : MonoBehaviour
 {
     [Header("Config. Player")]
     public float moveSpeed = 5f;
@@ -41,9 +41,12 @@ public class PlayerMovement : MonoBehaviour
     private string connectionString;
     private List<Task> pendingTasks = new List<Task>();
 
+    private List<Vector3> visitedPositions = new List<Vector3>();
+    private Dictionary<Vector3, Vector3> positionParents = new Dictionary<Vector3, Vector3>();
+
     void Start()
     {
-        dbFilePath = Path.Combine(Application.dataPath, "PlayerActionsLog.db");
+        dbFilePath = Path.Combine(Application.dataPath, "Agent2.db");
         connectionString = "URI=file:" + dbFilePath;
         InitializeDatabase();
 
@@ -87,7 +90,15 @@ public class PlayerMovement : MonoBehaviour
                     yield break;
                 }
 
-                RandomDirection();
+                if (hasGold)
+                {
+                    ReturnToInitialPosition();
+                }
+                else
+                {
+                    RandomDirection();
+                }
+
                 yield return new WaitForSeconds(.5f);
             }
             yield return null;
@@ -111,6 +122,12 @@ public class PlayerMovement : MonoBehaviour
             targetPosition = newPosition;
             LogRegister("...", "Move", directionName);
             isMoving = true;
+
+            if (!visitedPositions.Contains(targetPosition))
+            {
+                visitedPositions.Add(targetPosition);
+                positionParents[targetPosition] = previousPosition;
+            }
         }
     }
 
@@ -213,14 +230,13 @@ public class PlayerMovement : MonoBehaviour
             else if (hasGold)
             {
                 LogRegister("Light", "Perception", "...");
-                    AddMessage("Você percebe um brilho!");
-                    UpdateAlertText();
-                    LogRegister("Catch", "Perception", "...");
-                    AddMessage("Você encontrou o ouro!");
-                    UpdateAlertText();
-                    //RandomAction(1); // Não deveria chamar RandomAction(1) aqui, a menos que haja uma razão específica
-                    numberGold++;
-                    countGold.text = numberGold.ToString();
+                AddMessage("Você percebe um brilho!");
+                UpdateAlertText();
+                LogRegister("Catch", "Perception", "...");
+                AddMessage("Você encontrou o ouro!");
+                UpdateAlertText();
+                numberGold++;
+                countGold.text = numberGold.ToString();
             }
             else if (!perceptionFound)
             {
@@ -232,7 +248,6 @@ public class PlayerMovement : MonoBehaviour
         }
         return hasGold;
     }
-
 
     public void AddMessage(string message)
     {
@@ -316,7 +331,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-
     void RandomDirection()
     {
         int direction = UnityEngine.Random.Range(0, 4);
@@ -350,21 +364,17 @@ public class PlayerMovement : MonoBehaviour
 
     void BreezerCondition()
     {
-        // Gera um número aleatório entre 0 e 100
         int chance = UnityEngine.Random.Range(0, 100);
 
-        // 80% de chance de retornar à casa anterior
         if (chance < 80)
         {
-            Move(Vector2Int.zero, "P"); // Move para a posição anterior
+            Move(Vector2Int.zero, "P");
         }
-        // 20% de chance de avançar para outra casa
         else
         {
             RandomDirection();
         }
     }
-
 
     void DirectionArrow()
     {
@@ -390,6 +400,72 @@ public class PlayerMovement : MonoBehaviour
         {
             AddMessage("Você não possui mais flechas!");
             UpdateAlertText();
+        }
+    }
+
+    void ReturnToInitialPosition()
+    {
+        Queue<Vector3> queue = new Queue<Vector3>();
+        HashSet<Vector3> visited = new HashSet<Vector3>();
+
+        queue.Enqueue(targetPosition);
+        visited.Add(targetPosition);
+
+        while (queue.Count > 0)
+        {
+            Vector3 current = queue.Dequeue();
+
+            if (current == initialPosition)
+            {
+                Stack<Vector3> path = new Stack<Vector3>();
+                while (current != targetPosition)
+                {
+                    path.Push(current);
+                    current = positionParents[current];
+                }
+
+                StartCoroutine(FollowPath(path));
+                return;
+            }
+
+            Vector3[] directions = {
+                new Vector3(1, 0, 0) * spacing,
+                new Vector3(-1, 0, 0) * spacing,
+                new Vector3(0, 1, 0) * spacing,
+                new Vector3(0, -1, 0) * spacing
+            };
+
+            foreach (var direction in directions)
+            {
+                Vector3 nextPosition = current + direction;
+                if (IsWithinGrid(nextPosition) && !visited.Contains(nextPosition) && visitedPositions.Contains(nextPosition))
+                {
+                    queue.Enqueue(nextPosition);
+                    visited.Add(nextPosition);
+                    positionParents[nextPosition] = current;
+                }
+            }
+        }
+    }
+
+    IEnumerator FollowPath(Stack<Vector3> path)
+    {
+        while (path.Count > 0)
+        {
+            Vector3 nextPosition = path.Pop();
+            while (transform.position != nextPosition)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, nextPosition, moveSpeed * Time.deltaTime);
+                yield return null;
+            }
+        }
+
+        if (transform.position == initialPosition)
+        {
+            AddMessage("Você retornou à posição inicial com o ouro!");
+            UpdateAlertText();
+            LogRegister("Win", "Perception", "...");
+            yield break;
         }
     }
 
