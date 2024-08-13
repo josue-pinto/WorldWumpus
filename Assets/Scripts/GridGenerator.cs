@@ -70,7 +70,7 @@ public class GridGenerator : MonoBehaviour
         }
         // adicionando 200 agentes na população
         int population;
-        population = 200;
+        population = 200; //default 200
 
         for (int i = 0; i < population; i++)
         {

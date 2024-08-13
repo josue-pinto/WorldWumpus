@@ -158,7 +158,7 @@ public class PlayerMovement : MonoBehaviour
                     LogRegister("Stench", "Perception", "...");
                     AddMessage("Você sente um fedor!");
                     UpdateAlertText();
-                    RandomAction(1);
+                   // RandomAction(1);
                 }
             }
             else if (collider.CompareTag("Gold"))
@@ -173,6 +173,7 @@ public class PlayerMovement : MonoBehaviour
                     AddMessage("Você encontrou o ouro!");
                     Chromosome("TG",+1000); //took the gold
                     AgentTheBest(); //gravando o material genético do melhor agente até o momento
+                  //  PoolMutationtoEvaluate(playerId);//Remover depois somente para testar
                     UpdateAlertText();
                     hasGold = true;
                     RandomAction(1);
@@ -189,27 +190,27 @@ public class PlayerMovement : MonoBehaviour
                 }
             }
         }
-
+        //Não posso entrar aqui se for mutante, meter condicionamento
         if (foundBreeze && foundStench && !hasPit)
         {
             LogRegister("Breeze and Stench", "Perception", "...");
             AddMessage("Você sente uma brisa e um fedor!");
             UpdateAlertText();
-            RandomAction(2);
+          //  RandomAction(2);
         }
         else if (foundStench && !hasPit)
         {
             LogRegister("Stench", "Perception", "...");
             AddMessage("Você sente um fedor!");
             UpdateAlertText();
-            RandomAction(2);
+            //RandomAction(2);
         }
         else if (foundBreeze && !hasPit)
         {
             LogRegister("Breeze", "Perception", "...");
             AddMessage("Você sente uma brisa!");
             UpdateAlertText();
-            RandomAction(0);
+           // RandomAction(0);
         }
         else if (hasPit)
         {
@@ -222,6 +223,7 @@ public class PlayerMovement : MonoBehaviour
             Evaluate();
             Selection();
             PoolMutation();
+            PoolMutationtoEvaluate(playerId);
             UpdateAlertText();
             Destroy(gameObject);
         }
@@ -235,6 +237,9 @@ public class PlayerMovement : MonoBehaviour
             Pool();
             Evaluate();
             Selection();
+            PoolMutation();
+
+            // PoolMutationtoEvaluate(playerId);
             UpdateAlertText();
             Destroy(gameObject);
         }
@@ -243,7 +248,7 @@ public class PlayerMovement : MonoBehaviour
             LogRegister("Nothing", "Perception", "...");
             AddMessage("Você não sente nada.");
             UpdateAlertText();
-            RandomAction(1);
+           // RandomAction(1);
         }
         isMoving = false;
         return hasGold;
@@ -334,14 +339,52 @@ public class PlayerMovement : MonoBehaviour
 
     void RandomDirection()
     {
-       //colocando a rota dos mutantes para avaliar parei aqui 24 de julho
-       //if PoolMutationtoEvaluate ()
-            {
-        };
-        //aqui ta pegando um caminho aleatório, somente pode ser usado na primeira rodada
-        int direction = Random.Range(0, 4);
         Vector2Int directionVector;
         string direcao;
+        //colocando a rota dos mutantes para avaliar parei aqui 29 de julho, preciso alimentar o vetor com os dados da base de dados
+        if (playerId == "Player2000")
+        {
+            string[] genes = PoolMutationtoEvaluate(playerId);
+            
+            foreach (string gene in genes)
+            {
+                //Passando a rota do mutante
+                switch (gene)
+                {
+                    case "N":
+                        directionVector = Vector2Int.up;
+                        direcao = "N";
+                        break;
+
+                    case "S":
+                        directionVector = Vector2Int.down;
+                        direcao = "S";
+                        break;
+
+                    case "O":
+                        directionVector = Vector2Int.left;
+                        direcao = "O";
+                        break;
+                    case "L":
+                        directionVector = Vector2Int.right;
+                        direcao = "L";
+                        break;
+                    default:
+                        directionVector = Vector2Int.zero;
+                        direcao = "P";
+                        break;
+                }
+                Move(directionVector, direcao);
+            }
+
+        }
+
+        else
+
+        {
+        //aqui ta pegando um caminho aleatório, somente pode ser usado na primeira rodada
+        int direction = Random.Range(0, 4);
+        
         switch (direction)
         {
             case 0:
@@ -366,6 +409,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
         Move(directionVector, direcao);
+        }
     }
 
     void BreezerCondition()
@@ -502,6 +546,13 @@ public class PlayerMovement : MonoBehaviour
                 command.ExecuteNonQuery();
             }
             connection.Close();
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS Selection (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Fitness TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
+                command.ExecuteNonQuery();
+            }
+            connection.Close();
         }
     }
 
@@ -624,13 +675,13 @@ public class PlayerMovement : MonoBehaviour
                 using (var command = connection.CreateCommand())
                 {
                     //add os 170 para piscina de cruzamento
-                    if (playerId == "Player200")
-                    {
-                    //command.CommandText = "INSERT INTO Pool (PlayerId, Gene , Weight )  SELECT  PlayerId,Gene , Weight from Chromosome WHERE PlayerId in (SELECT PlayerId from Chromosome group by PlayerId limit 170 )";
+                    //if (playerId == "Player2")
+                    //{
+                    // PlayerId limit 170 
                     command.CommandText = "INSERT INTO Pool (PlayerId, Gene , Weight )  SELECT  PlayerId,Gene , Weight from Chromosome WHERE PlayerId in (SELECT PlayerId from Selection group by PlayerId limit 170 )";
                     command.Parameters.AddWithValue("@playerId", playerId);
                     command.ExecuteNonQuery();
-                    }
+                    //}
                 }
                 connection.Close();
             }
@@ -661,8 +712,8 @@ public class PlayerMovement : MonoBehaviour
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    //command.CommandText = "INSERT INTO CrossOver (PlayerId, Gene  )  SELECT  PlayerId,Gene  FROM Pool where Weight  <>   '-1000' ";
-                    command.CommandText = "INSERT INTO CrossOver(PlayerId, Gene)  SELECT PlayerId, Gene  FROM Pool where id in (SELECT id - 1 from Pool where Weight = '-1000'   ) ";
+                    //Ando dois passos para trás para pegar o Gen bom, isto é: "Não pegar o passo da morte"
+                    command.CommandText = "INSERT INTO CrossOver(PlayerId, Gene)  SELECT PlayerId, Gene  FROM Pool where id in (SELECT id - 2 from Pool where Weight = '-1000'   ) ";
                     //command.CommandText = "DELETE CrossOver(PlayerId, Gene)  SELECT PlayerId, Gene  FROM Pool where id in (SELECT id - 1 from Pool where Weight = '-1000'   ) ";
                     //Permutar dois agentes Mutação 3.3.1 aula 11 1h37m
 
@@ -699,8 +750,6 @@ public class PlayerMovement : MonoBehaviour
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
-                    //SELECT PlayerId,Gene FROM (select PlayerId, Gene   from CrossOver  GROUP by PlayerId ORDER by random() LIMIT 2 )   ASC limit 2
-
                     command.CommandText = "INSERT INTO PoolMutation(PlayerId, Gene)  SELECT PlayerId, Gene  FROM CrossOver where id in (SELECT id - 1 from Pool where Weight = '-1000'   ) ";
                     // eliminar a metede depois da mutacao?
 
@@ -727,65 +776,121 @@ public class PlayerMovement : MonoBehaviour
     }
     // Apos Mutacao avaliar novamente
     //pegando array do novo cromossomo após a mutação para rodar na table 4 x 4 e avaliar depois com fitness
-    public void PoolMutationtoEvaluate()
+    /* public void PoolMutationtoEvaluate(string playerId)
+     {
+         Task createPoolMutationtoEvaluate = Task.Run(() =>
+         {
+             using (var connection = new SqliteConnection(connectionString))
+             {
+                 connection.Open();
+                 using (var command = connection.CreateCommand())
+                 {
+                     command.CommandText = "SELECT Gene FROM  PoolMutation WHERE PlayerId = @playerId  ";
+                     command.Parameters.AddWithValue("@playerId", playerId);
+                     command.ExecuteNonQuery();
+
+                     // Array para armazenar os dados
+                     string[] resultados;
+                     var reader = command.ExecuteReader();
+                     // Contar o número de linhas
+                     int count = 0;
+                     while (reader.Read())
+                     {
+                         count++;
+                     }
+
+                     // Inicializar o array com o tamanho correto
+                     resultados = new string[count];
+                     connection.Close();
+                     //reader = command.ExecuteReader();
+                     int index = 0;
+                     while (reader.Read())
+                     {
+                         resultados[index] = reader["Gene"].ToString();
+                         index++;
+                     }
+
+                     reader.Close();
+                     // Exibir os resultados
+                     foreach (var item in resultados)
+                     {
+                         Console.WriteLine(item);
+                        // gene = item;
+
+                     }
+                 }
+
+                 connection.Close();
+
+             }
+         });
+
+         pendingTasks.Add(createPoolMutationtoEvaluate);
+
+         try
+         {
+             createPoolMutationtoEvaluate.Wait();
+         }
+         catch (Exception ex)  // Exceção adicionada aqui
+         {
+             Debug.LogError($"Failed to PoolMutationtoEvaluate to database. Error: {ex.Message}");
+         }
+         finally
+         {
+             pendingTasks.Remove(createPoolMutationtoEvaluate);
+         }
+     }
+    */
+    /*
+    public async Task<string[]> PoolMutationtoEvaluateAsync(string playerId)
     {
-        Task createPoolMutationtoEvaluate = Task.Run(() =>
+        using (var connection = new SqliteConnection(connectionString))
         {
-            using (var connection = new SqliteConnection(connectionString))
+            await connection.OpenAsync();
+            using (var command = connection.CreateCommand())
             {
-                connection.Open();
-                using (var command = connection.CreateCommand())
+                command.CommandText = "SELECT Gene FROM PoolMutation WHERE PlayerId = @playerId";
+                command.Parameters.AddWithValue("@playerId", playerId);
+
+                var reader = await command.ExecuteReaderAsync();
+                var results = new List<string>();
+
+                while (await reader.ReadAsync())
                 {
-                    command.CommandText = "SELECT Gene FROM  PoolMutation ) ";
-                    // Array para armazenar os dados
-                    string[] resultados;
-                    var reader = command.ExecuteReader();
-                    // Contar o número de linhas
-                    int count = 0;
-                    while (reader.Read())
-                    {
-                        count++;
-                    }
-
-                    // Inicializar o array com o tamanho correto
-                    resultados = new string[count];
-                    connection.Close();
-                    reader = command.ExecuteReader();
-                    int index = 0;
-                    while (reader.Read())
-                    {
-                        resultados[index] = reader["Gene"].ToString();
-                        index++;
-                    }
-
-                    reader.Close();
-                    // Exibir os resultados
-                    foreach (var item in resultados)
-                    {
-                        Console.WriteLine(item);
-                    }
+                    results.Add(reader["Gene"].ToString());
                 }
 
-                connection.Close();
-              
+                reader.Close();
+                return results.ToArray();
             }
-        });
-
-        pendingTasks.Add(createPoolMutationtoEvaluate);
-
-        try
-        {
-            createPoolMutationtoEvaluate.Wait();
-        }
-        catch (Exception ex)  // Exceção adicionada aqui
-        {
-            Debug.LogError($"Failed to PoolMutation to database. Error: {ex.Message}");
-        }
-        finally
-        {
-            pendingTasks.Remove(createPoolMutationtoEvaluate);
         }
     }
+    */
+
+    public string[] PoolMutationtoEvaluate(string playerId)
+    {
+        using (var connection = new SqliteConnection(connectionString))
+        {
+            connection.Open();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT Gene FROM PoolMutation WHERE PlayerId = @playerId";
+                command.Parameters.AddWithValue("@playerId", playerId);
+
+                var reader = command.ExecuteReader();
+                var results = new List<string>();
+
+                while (reader.Read())
+                {
+                    results.Add(reader["Gene"].ToString());
+                }
+
+                reader.Close();
+                return results.ToArray();
+            }
+        }
+    }
+
 
     //Criando a tabela de Avaliacao para posterior Seleção com  função fitness calculada (+4) + (-7) = 3 -- aula 11 time 1:24:14
     public void Evaluate()
@@ -830,6 +935,7 @@ public class PlayerMovement : MonoBehaviour
                 connection.Open();
                 using (var command = connection.CreateCommand())
                 {
+                    //DESC limit 100
                     command.CommandText = "INSERT INTO Selection (PlayerId,Fitness)  SELECT PlayerId, Fitness from Evaluate GROUP by PlayerId ORDER by 2 DESC limit 100";
                     command.ExecuteNonQuery();
                 }
