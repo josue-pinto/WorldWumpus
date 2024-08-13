@@ -22,6 +22,7 @@ public class GridGenerator : MonoBehaviour
     private int columns;
     public float spacing = 1.0f;
     public float minSpacing = 0.5f;
+    public int count = 0;
     private Camera mainCamera;
     private CameraController cameraController;
 
@@ -103,12 +104,16 @@ public class GridGenerator : MonoBehaviour
         Vector3 playerPosition = new Vector3(startX, startY, 0);
         GameObject playerObject = Instantiate(Player, playerPosition, Quaternion.identity, transform);
         PlayerMovement playerMovement = playerObject.GetComponent<PlayerMovement>();
+<<<<<<< HEAD
         playerMovement.playerId = $"Player{count}";
         //add os 170 para piscina de cruzamento
         if (playerMovement.playerId == "Player200")
             {
             playerMovement.Pool();
             }
+=======
+        playerMovement.playerId = Convert.ToString($"Player {count}");
+>>>>>>> upstream/main
         playerMovement.Initialize(rows, columns, spacing);
         playerMovement.alertText = alertText;
         playerMovement.countGold = countGold;

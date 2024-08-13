@@ -8,16 +8,24 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System;
+<<<<<<< HEAD
 using Random = UnityEngine.Random; // ou System.Random
 
+=======
+>>>>>>> upstream/main
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Config. Player")]
     public float moveSpeed = 5f;
     private Vector3 targetPosition;
+<<<<<<< HEAD
     private Vector3 initialPosition;
     private Vector3 previousPosition;
+=======
+    private Vector3 previousPosition;
+    private Vector3 lastCheckedPosition;  // Nova variável
+>>>>>>> upstream/main
     private int rows;
     private int columns;
     private float spacing;
@@ -41,6 +49,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Config. Logging")]
     public string playerId;
+<<<<<<< HEAD
      //add os 170 para piscina de cruzamento
     //    if (playerId == "Player200")
       //  {
@@ -49,6 +58,8 @@ public class PlayerMovement : MonoBehaviour
     
 
     public string gene;
+=======
+>>>>>>> upstream/main
     private string dbFilePath;
     private string connectionString;
     private List<Task> pendingTasks = new List<Task>();  // Lista de tarefas pendentes
@@ -64,6 +75,7 @@ public class PlayerMovement : MonoBehaviour
         countGold.text = numberGold.ToString();
         countArrow.text = numberArrow.ToString();
         targetPosition = transform.position;
+<<<<<<< HEAD
         initialPosition = targetPosition;
         alertText.text = "";
         //CheckForPerceptions(targetPosition);
@@ -71,21 +83,65 @@ public class PlayerMovement : MonoBehaviour
         hasGold = false;
         hasWumpus = true;
         inicio = "I";
+=======
+        lastCheckedPosition = targetPosition;  // Inicializa com a posição inicial do jogador
+        alertText.text = "";
+        isMoving = false;
+        hasGold = false;
+        hasWumpus = true;
+        CheckForPerceptions(targetPosition);
+        StartCoroutine(PlayerSimulation());  // Inicia a simulação do jogador
+>>>>>>> upstream/main
     }
 
     void FixedUpdate()
     {
+<<<<<<< HEAD
         if (!isMoving)
         {
             CheckForPerceptions(targetPosition);
         }
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed);
+=======
+        if (isMoving)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+
+            if (transform.position == targetPosition)
+            {
+                isMoving = false;
+                CheckForPerceptions(targetPosition);
+            }
+        }
+    }
+
+    IEnumerator PlayerSimulation()
+    {
+        while (true)
+        {
+            if (!isMoving)
+            {
+                // Verifique se alguma condição específica foi atendida
+                if (hasGold || !hasWumpus)
+                {
+                    yield break;  // Termina a corrotina se a condição for atendida
+                }
+
+                // Move-se aleatoriamente
+                RandomDirection();
+                
+                // Aguarda um pouco antes de se mover novamente
+                yield return new WaitForSeconds(1f);
+            }
+            yield return null;
+        }
+>>>>>>> upstream/main
     }
 
     public void Initialize(int rows, int columns, float spacing)
     {
         this.rows = rows;
-        this.columns = columns;
+        this.columns = rows;
         this.spacing = spacing;
     }
 
@@ -97,9 +153,14 @@ public class PlayerMovement : MonoBehaviour
         {
             previousPosition = targetPosition;
             targetPosition = newPosition;
+<<<<<<< HEAD
             LogRegister("...", "Move", direcao); // Registrar o movimento aqui
             Chromosome(direcao,-1); //criar cromossomo de movimento de direção
             CheckForPerceptions(newPosition);
+=======
+            LogRegister("...", "Move", direcao);  // Registrar o movimento aqui
+            isMoving = true;
+>>>>>>> upstream/main
         }
     }
 
@@ -158,7 +219,11 @@ public class PlayerMovement : MonoBehaviour
                     LogRegister("Stench", "Perception", "...");
                     AddMessage("Você sente um fedor!");
                     UpdateAlertText();
+<<<<<<< HEAD
                    // RandomAction(1);
+=======
+                    RandomAction(1);
+>>>>>>> upstream/main
                 }
             }
             else if (collider.CompareTag("Gold"))
@@ -171,9 +236,12 @@ public class PlayerMovement : MonoBehaviour
                     UpdateAlertText();
                     LogRegister("Catch", "Perception", "...");
                     AddMessage("Você encontrou o ouro!");
+<<<<<<< HEAD
                     Chromosome("TG",+1000); //took the gold
                     AgentTheBest(); //gravando o material genético do melhor agente até o momento
                   //  PoolMutationtoEvaluate(playerId);//Remover depois somente para testar
+=======
+>>>>>>> upstream/main
                     UpdateAlertText();
                     hasGold = true;
                     RandomAction(1);
@@ -190,32 +258,49 @@ public class PlayerMovement : MonoBehaviour
                 }
             }
         }
+<<<<<<< HEAD
         //Não posso entrar aqui se for mutante, meter condicionamento
+=======
+
+>>>>>>> upstream/main
         if (foundBreeze && foundStench && !hasPit)
         {
             LogRegister("Breeze and Stench", "Perception", "...");
             AddMessage("Você sente uma brisa e um fedor!");
             UpdateAlertText();
+<<<<<<< HEAD
           //  RandomAction(2);
+=======
+            RandomAction(2);
+>>>>>>> upstream/main
         }
         else if (foundStench && !hasPit)
         {
             LogRegister("Stench", "Perception", "...");
             AddMessage("Você sente um fedor!");
             UpdateAlertText();
+<<<<<<< HEAD
             //RandomAction(2);
+=======
+            RandomAction(2);
+>>>>>>> upstream/main
         }
         else if (foundBreeze && !hasPit)
         {
             LogRegister("Breeze", "Perception", "...");
             AddMessage("Você sente uma brisa!");
             UpdateAlertText();
+<<<<<<< HEAD
            // RandomAction(0);
+=======
+            RandomAction(0);
+>>>>>>> upstream/main
         }
         else if (hasPit)
         {
             LogRegister("Pit", "Perception", "...");
             AddMessage("Você caiu em um poço!");
+<<<<<<< HEAD
             Chromosome("FP",-1000); //Fell into the pit
             //mover para o fim dos 200 agentes deixei aqui para facilitar a análise
             CrossOver();
@@ -224,12 +309,15 @@ public class PlayerMovement : MonoBehaviour
             Selection();
             PoolMutation();
             PoolMutationtoEvaluate(playerId);
+=======
+>>>>>>> upstream/main
             UpdateAlertText();
             Destroy(gameObject);
         }
         else if (hasWumpus && perceptionFound)
         {
             LogRegister("Wumpus", "Perception", "...");
+<<<<<<< HEAD
             Chromosome("KbW",-1000); //Gravando cromossomo, KbW (killed by the Wumpus)
             AddMessage("Você morreu para o Wumpus!");
             //mover para o fim dos 200 agentes deixei aqui para facilitar a análise
@@ -240,6 +328,9 @@ public class PlayerMovement : MonoBehaviour
             PoolMutation();
 
             // PoolMutationtoEvaluate(playerId);
+=======
+            AddMessage("Você morreu para o Wumpus!");
+>>>>>>> upstream/main
             UpdateAlertText();
             Destroy(gameObject);
         }
@@ -248,9 +339,14 @@ public class PlayerMovement : MonoBehaviour
             LogRegister("Nothing", "Perception", "...");
             AddMessage("Você não sente nada.");
             UpdateAlertText();
+<<<<<<< HEAD
            // RandomAction(1);
         }
         isMoving = false;
+=======
+            RandomAction(1);
+        }
+>>>>>>> upstream/main
         return hasGold;
     }
 
@@ -323,6 +419,7 @@ public class PlayerMovement : MonoBehaviour
                 if (!hasShotArrow)
                 {
                     DirectionArrow();
+<<<<<<< HEAD
                     isWumpus(wumpus);
                 }
                 else
@@ -330,6 +427,13 @@ public class PlayerMovement : MonoBehaviour
                     LogRegister("Not Arrow", "DirectionArrow", "...");
                     Chromosome("NA",-1); //gravando cromossomo NA (Not Arrow)
                     AddMessage("Você não possui mais flechas.");
+=======
+                }
+                else
+                {
+                    LogRegister("Random", "Perception", "...");
+                    AddMessage("Você agiu de forma aleatória e tropeçou em seus próprios passos.");
+>>>>>>> upstream/main
                     UpdateAlertText();
                     RandomDirection();
                 }
@@ -339,6 +443,7 @@ public class PlayerMovement : MonoBehaviour
 
     void RandomDirection()
     {
+<<<<<<< HEAD
         Vector2Int directionVector;
         string direcao;
         //colocando a rota dos mutantes para avaliar parei aqui 29 de julho, preciso alimentar o vetor com os dados da base de dados
@@ -385,6 +490,11 @@ public class PlayerMovement : MonoBehaviour
         //aqui ta pegando um caminho aleatório, somente pode ser usado na primeira rodada
         int direction = Random.Range(0, 4);
         
+=======
+        int direction = UnityEngine.Random.Range(0, 4);
+        Vector2Int directionVector;
+        string direcao;
+>>>>>>> upstream/main
         switch (direction)
         {
             case 0:
@@ -409,11 +519,15 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
         Move(directionVector, direcao);
+<<<<<<< HEAD
         }
+=======
+>>>>>>> upstream/main
     }
 
     void BreezerCondition()
     {
+<<<<<<< HEAD
         int situation = Random.Range(0, 2);
 
         switch (situation)
@@ -427,11 +541,18 @@ public class PlayerMovement : MonoBehaviour
                 RandomDirection();
                 break;
         }
+=======
+         RandomDirection();           
+>>>>>>> upstream/main
     }
 
     void DirectionArrow()
     {
+<<<<<<< HEAD
         int direction = Random.Range(0, 4);
+=======
+        int direction = UnityEngine.Random.Range(0, 4);
+>>>>>>> upstream/main
         Vector2 directionVector;
         string direcao;
         switch (direction)
@@ -467,11 +588,14 @@ public class PlayerMovement : MonoBehaviour
         if (wumpus != null)
         {
             LogRegister("Kill", "ShootArrow", "...");
+<<<<<<< HEAD
             Chromosome("KW", +1000); // gravando cromossomo KW (Killed the Wumpus)
             //AgentTheBest(); //gravando o material genético do melhor agente até o momento
             //Pool(); //TESTE PISCINA
             //Evaluate(); //gravando a avaliacaõa para posterior selecao
             //Selection(); //gravando a selecao para posterior cruzamento
+=======
+>>>>>>> upstream/main
             AddMessage("Você matou o Wumpus!");
             UpdateAlertText();
             hasWumpus = false;
@@ -494,6 +618,7 @@ public class PlayerMovement : MonoBehaviour
                 command.CommandText = "CREATE TABLE IF NOT EXISTS PlayerActions (Id INTEGER PRIMARY KEY AUTOINCREMENT, PlayerId TEXT, Perception TEXT, Action TEXT, Direction TEXT, Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
                 command.ExecuteNonQuery();
             }
+<<<<<<< HEAD
             connection.Close();
             //FALTA CRIAR O METODO QUE SAIU COM SUCESSO OU SEJA VOLTOU A 0.0
             connection.Open();
@@ -553,6 +678,8 @@ public class PlayerMovement : MonoBehaviour
                 command.ExecuteNonQuery();
             }
             connection.Close();
+=======
+>>>>>>> upstream/main
         }
     }
 
@@ -582,7 +709,11 @@ public class PlayerMovement : MonoBehaviour
         {
             logTask.Wait();
         }
+<<<<<<< HEAD
         catch (Exception ex)  // Exceção adicionada aqui
+=======
+        catch (Exception ex)
+>>>>>>> upstream/main
         {
             Debug.LogError($"Failed to log action to database. Error: {ex.Message}");
         }
@@ -591,6 +722,7 @@ public class PlayerMovement : MonoBehaviour
             pendingTasks.Remove(logTask);
         }
     }
+<<<<<<< HEAD
 
     //Criando tabela do Cromossomo para fazer a reproducao e mutação posteriormente.
     public void Chromosome(string gene, Single weight)
@@ -958,4 +1090,6 @@ public class PlayerMovement : MonoBehaviour
             pendingTasks.Remove(createSelection);
         }
     }
+=======
+>>>>>>> upstream/main
 }
