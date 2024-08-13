@@ -72,7 +72,12 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 mestrado
 mestrado.pub
+
 .gitignore.swp
+Assets/PlayerActionsLog.*
+Assets/PlayerActionsLog.db
+PlayerActionsLog.db.meta
+Assets/PlayerActionsLog.sqbpro
 Assets/Scripts/echo
 Assets/Scripts/port445=no_netbios
 Assets/Scripts/protocol_vers_map=6
